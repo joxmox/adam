@@ -45,7 +45,7 @@ docApi = $(doc)api/
 docTst = $(doc)test/
 
 # names
-libName  = sebutil
+libName  = adam
 libFile  = lib${libName}.a
 
 distName = mt_dlc_input
@@ -104,7 +104,7 @@ lib_assemble :
 
 util_compile : $(objLib)stringUtils.o 
 
-domain_compile : $(objLib)Buffer.o $(objLib)Tty.o
+domain_compile : $(objLib)Buffer.o $(objLib)Tty.o $(objLib)Editor.o $(objLib)Window.o
 
 
 # -----------------------
@@ -119,6 +119,12 @@ $(objLib)Tty.o : $(dom)Tty.cpp $(dom)Tty.hpp
 	$(compile)
 	
 $(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp 
+	$(compile)
+
+$(objLib)Window.o : $(dom)Window.cpp $(dom)Window.hpp $(dom)Tty.hpp
+	$(compile)
+
+$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(dom)Tty.hpp $(dom)functions.hpp $(dom)Window.hpp
 	$(compile)
 
 
@@ -137,7 +143,7 @@ $(bin)adam : $(objApp)adam.o $(lib)$(libFile)
 # -----------------------
 # app objs
 # -----------------------
-$(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(dom)Tty.hpp
+$(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp
 	$(compile)
 
 

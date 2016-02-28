@@ -9,58 +9,47 @@
 #define DOMAIN_EDITOR_HPP_
 
 #include <string>
-
-#include "log4cxx/logger.h"
-#include "log4cxx/propertyconfigurator.h"
+#include <map>
 
 #include "Buffer.hpp"
 #include "Tty.hpp"
+#include "Window.hpp"
+
+
 
 using namespace std;
 using namespace log4cxx;
 
+class Editor;
+
+using funcFun = void (*)(Editor*);
+using funcVec = vector<funcFun>;
+
 class Editor {
 	Tty* tty = nullptr;
-//	Window* win = nullptr;
+	Window* win = nullptr;
 	Buffer* buf = nullptr;
 	string bufName;
 	map<string, Buffer*> bufMap;
 	string fileName;
+	int key = 0;
+	bool loop = true;
 	string getBufferName(const string& fileName);
+	funcVec disMap;
+	void mainLoop();
+	void initDispatch();
+	void setDisp(int key, funcFun f);
+	void setDisp(int key1, int key2, funcFun f);
 public:
 	Editor(const string& fileName);
 	~Editor();
 	void edit();
+	int getKey();
+	void quit();
+	void insertChar();
+	void debug();
 };
 
-Editor::Editor(const string& fileName) {
-	this->fileName = fileName;
-	LoggerPtr logger{Logger::getLogger("Editor")};
-	LOG4CXX_DEBUG(logger, "instance created. filename is " << fileName);
-}
-
-Editor::~Editor() {
-	LoggerPtr logger{Logger::getLogger("~Editor")};
-	LOG4CXX_DEBUG(logger, "shutting down");
-	if (tty != nullptr) delete tty;
-	LOG4CXX_DEBUG(logger, "tty deleted");
-}
-
-void Editor::edit() {
-	LoggerPtr logger{Logger::getLogger("Editor.edit")};
-	LOG4CXX_DEBUG(logger, "starting");
-	tty = new Tty();
-//	win = new Window(tty);
-	buf = new Buffer(fileName);
-	bufName = getBufferName(fileName);
-	bufMap[bufName] = buf;
-
-
-}
-
-string Editor::getBufferName(const string& fileName) {
-	return fileName;
-}
 
 
 

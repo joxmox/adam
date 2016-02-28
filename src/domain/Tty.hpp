@@ -1,17 +1,21 @@
 #pragma once
 
-#include <ncurses.h>
-#include <string>
 #include <map>
 #include <fstream>
 
 
 class Tty {
-  int height;
-  int width;
-  int row;
-  int col;
+	int height;
+	int width;
+	int cmdRow;
+	int messRow;
 public:
-  Tty();
-  ~Tty();
+	Tty();
+	~Tty();
+	void pos(int row, int col);
+	void print(char c);
+	int getHeight();
+	int getWidth();
+	int readKey();
+
 };
