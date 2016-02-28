@@ -49,6 +49,7 @@ void Window::printChar(int key) {
 	LOG4CXX_TRACE(logger, "move done");
 	tty->print(key);
 	LOG4CXX_TRACE(logger, "print done");
+	moveTty(row, col);
 }
 
 
