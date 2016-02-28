@@ -6,7 +6,7 @@ gtest		= $(HOME)/Tools/googletest-release-1.7.0
 std			= -std=c++14
 cxx_opts	= $(std) -g3 -fmax-errors=1 -Wall -Wno-sign-compare
 app_incl	= -I$(dom) -I$(utl)
-app_libs	= -L$(lib) -l$(libName) -llog4cxx -lpthread
+app_libs	= -L$(lib) -l$(libName) -llog4cxx -lpthread -lncurses
 tst_incl	= -I$(gtest)/include
 tst_libs	= -L$(gtest)/lib -lgtest -lgtest_main -lpthread
 
@@ -104,7 +104,7 @@ lib_assemble :
 
 util_compile : $(objLib)stringUtils.o 
 
-domain_compile : 
+domain_compile : $(objLib)Buffer.o $(objLib)Tty.o
 
 
 # -----------------------
@@ -114,25 +114,31 @@ domain_compile :
 
 $(objLib)stringUtils.o : $(utl)stringUtils.cpp $(utl)stringUtils.hpp
 	$(compile)
+	
+$(objLib)Tty.o : $(dom)Tty.cpp $(dom)Tty.hpp 
+	$(compile)
+	
+$(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp 
+	$(compile)
 
 
 # -----------------------
 # app
 # -----------------------
-app_compile : 
+app_compile : lib $(bin)adam
 
 # -----------------------
 # app exes
 # -----------------------
-#$(bin)dlcGenerator : $(objApp)dlcGenerator.o $(lib)$(libFile)  
-#	$(link)
+$(bin)adam : $(objApp)adam.o $(lib)$(libFile)  
+	$(link)
 
 
 # -----------------------
 # app objs
 # -----------------------
-#$(objApp)dlcGenerator.o : $(app)dlcGenerator.cpp $(dom)Record.hpp $(dom)dlcRecord.hpp
-#	$(compile)
+$(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(dom)Tty.hpp
+	$(compile)
 
 
 
@@ -159,7 +165,6 @@ test_show :
 
 
 $(bin)unitTest : $(tstObjs) $(objLib)stringUtils.o
-	echo $(testObjs)
 	$(link) $(tst_libs)
 
 	
