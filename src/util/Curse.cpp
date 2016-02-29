@@ -46,7 +46,7 @@ Win* Curse::creWin(int height, int width, int row, int col) {
 	WINDOW* z = newwin(height, width, row, col);
 	LOG4CXX_DEBUG(logger, "created window with id = " << winMap.size());
 	winMap.push_back(static_cast<void*>(z));
-	Win* w = new Win {height, width, row, col, winMap.size() - 1, this};
+	Win* w = new Win {height, width, row, col, int(winMap.size()) - 1, this};
 	return w;
 }
 

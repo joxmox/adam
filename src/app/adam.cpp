@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
 	string usage = "usage: " + string(argv[0]) + " <file name> [--debug <debug level>]";
 
 	string fileName;
-	int dbgMask;
+	int dbgMask {0}; // just a dummy for time beeing
 	if (argc > 1) {
 		fileName = argv[1];
 	}
@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
 			return 1;
 		}
 	}
+	dbgMask++; // dummy op;
 
     if (fileName.empty()) {
     	cerr << argv[0] << "No filename specified" << endl << usage << endl;
