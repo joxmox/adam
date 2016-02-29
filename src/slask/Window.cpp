@@ -31,14 +31,14 @@ void Window::initScreen() {
 }
 
 
-Window::Window(Tty* tty, scrMode mode) : tty(tty), mode(mode) {
+Window::Window(Curse* tty, scrMode mode) : tty(tty), mode(mode) {
 	LoggerPtr logger{Logger::getLogger("Window")};
 	LOG4CXX_DEBUG(logger, "creating window" << winId);
 	initScreen();
 }
 
 void Window::moveTty(int row, int col) {
-	tty->pos(anchorRow + row, anchorCol + col);
+	tty->pos(0, anchorRow + row, anchorCol + col);
 }
 
 void Window::printChar(int key) {
@@ -47,7 +47,7 @@ void Window::printChar(int key) {
 	LOG4CXX_DEBUG(logger, "inserting key: " << key);
 	moveTty(row, col++);
 	LOG4CXX_TRACE(logger, "move done");
-	tty->print(key);
+	tty->print(0, key);
 	LOG4CXX_TRACE(logger, "print done");
 	moveTty(row, col);
 }

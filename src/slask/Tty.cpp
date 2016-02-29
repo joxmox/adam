@@ -15,7 +15,7 @@ using namespace std;
 using namespace log4cxx;
 
 
-Tty::Tty() {
+Curse::Curse() {
 	LoggerPtr logger{Logger::getLogger("Tty")};
 	LOG4CXX_DEBUG(logger, "creating Tty");
 	initscr();
@@ -32,28 +32,28 @@ Tty::Tty() {
 
 }
 
-Tty::~Tty() {
+Curse::~Curse() {
 	LoggerPtr logger{Logger::getLogger("~Tty")};
 	LOG4CXX_DEBUG(logger, "shutting down curses");
 	endwin();
 }
 
-int Tty::getWidth() {
+int Curse::getWidth() {
 	return width;
 }
 
-int Tty::getHeight() {
+int Curse::getHeight() {
 	return height - 2;
 }
 
-int Tty::readKey() {
+int Curse::readKey() {
   return getch();
 }
 
-void Tty::pos(int row, int col) {
+void Curse::pos(int row, int col) {
 	move(row, col);
 }
 
-void Tty::print(char c) {
+void Curse::print(char c) {
 	winsch(stdscr, c);
 }

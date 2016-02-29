@@ -14,10 +14,9 @@
 #include "log4cxx/propertyconfigurator.h"
 
 #include "Buffer.hpp"
-#include "Tty.hpp"
+#include "Curse.hpp"
 #include "functions.hpp"
 #include "Editor.hpp"
-#include "Window.hpp"
 
 using namespace std;
 
@@ -45,10 +44,14 @@ void Editor::quit() {
 void Editor::edit() {
 	LoggerPtr logger{Logger::getLogger("Editor.edit")};
 	LOG4CXX_DEBUG(logger, "starting");
-	tty = new Tty();
-	win = new Window(tty);
+	initDispatch();
+	tty = new Curse();
+	Win* mainWin = tty->creWin(tty->getHeight() - 3, tty->getWidth(), 0, 0);
+	Win* stsWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 3, 0);
+	cmdWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 2, 0);
+	messWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 1, 0);
 	bufName = getBufferName(fileName);
-	buf = new Buffer(bufName, fileName, win);
+	buf = new Buffer(bufName, fileName, mainWin, stsWin, messWin, cmdWin);
 	bufMap[bufName] = buf;
 	if (buf->fileExists()) {
 		int readLines = buf->getLines();
@@ -56,7 +59,6 @@ void Editor::edit() {
 	} else {
 		LOG4CXX_DEBUG(logger, "editing new file");
 	}
-	initDispatch();
 	mainLoop();
 }
 
@@ -67,8 +69,10 @@ string Editor::getBufferName(const string& fileName) {
 void Editor::mainLoop() {
 	LoggerPtr logger{Logger::getLogger("Editor.mainLoop")};
 	while (loop) {
-		key = tty->readKey();
-		LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard");
+		buf->setFocus();
+		LOG4CXX_TRACE(logger, "waiting for key from terminal");
+		key = buf->getMainWin()->readKey();
+		LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		disMap[key](this);
 	}
 }
@@ -98,14 +102,12 @@ void Editor::insertChar() {
 	LoggerPtr logger{Logger::getLogger(string("Editor") + string(__func__))};
 	LOG4CXX_DEBUG(logger, "inserting character");
 	buf->insertChar(key);
-
 }
 
 void Editor::debug() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
 	LOG4CXX_DEBUG(logger, "dumping buffer:");
 	buf->dump();
-
 }
 
 

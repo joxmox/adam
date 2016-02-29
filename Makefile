@@ -72,7 +72,7 @@ help :
 
 
 clean :
-	$(rm) $(bld)
+	$(rm) $(bld)*
 
 app  : lib app_compile
 test : lib test_compile test_run test_report
@@ -102,9 +102,9 @@ lib_assemble :
 	$(md) $(lib)
 	$(ar) $(lib)$(libFile) $(objLib)*.o
 
-util_compile : $(objLib)stringUtils.o 
+util_compile : $(objLib)stringUtils.o $(objLib)Curse.o 
 
-domain_compile : $(objLib)Buffer.o $(objLib)Tty.o $(objLib)Editor.o $(objLib)Window.o
+domain_compile : $(objLib)Buffer.o $(objLib)Editor.o
 
 
 # -----------------------
@@ -115,28 +115,28 @@ domain_compile : $(objLib)Buffer.o $(objLib)Tty.o $(objLib)Editor.o $(objLib)Win
 $(objLib)stringUtils.o : $(utl)stringUtils.cpp $(utl)stringUtils.hpp
 	$(compile)
 	
-$(objLib)Tty.o : $(dom)Tty.cpp $(dom)Tty.hpp 
+$(objLib)Curse.o : $(utl)Curse.cpp $(utl)Curse.hpp 
 	$(compile)
 	
 $(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp 
 	$(compile)
 
-$(objLib)Window.o : $(dom)Window.cpp $(dom)Window.hpp $(dom)Tty.hpp
-	$(compile)
-
-$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(dom)Tty.hpp $(dom)functions.hpp $(dom)Window.hpp
+$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp $(dom)functions.hpp 
 	$(compile)
 
 
 # -----------------------
 # app
 # -----------------------
-app_compile : lib $(bin)adam
+app_compile : lib $(bin)adam $(bin)ct
 
 # -----------------------
 # app exes
 # -----------------------
 $(bin)adam : $(objApp)adam.o $(lib)$(libFile)  
+	$(link)
+	
+$(bin)ct : $(objApp)ct.o $(lib)$(libFile)  
 	$(link)
 
 
@@ -146,7 +146,8 @@ $(bin)adam : $(objApp)adam.o $(lib)$(libFile)
 $(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp
 	$(compile)
 
-
+$(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp
+	$(compile)
 
 
 # -----------------------

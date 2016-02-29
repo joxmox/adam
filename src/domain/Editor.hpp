@@ -12,8 +12,7 @@
 #include <map>
 
 #include "Buffer.hpp"
-#include "Tty.hpp"
-#include "Window.hpp"
+#include "Curse.hpp"
 
 
 
@@ -26,8 +25,9 @@ using funcFun = void (*)(Editor*);
 using funcVec = vector<funcFun>;
 
 class Editor {
-	Tty* tty = nullptr;
-	Window* win = nullptr;
+	Curse* tty = nullptr;
+	Win* cmdWin = nullptr;
+	Win* messWin = nullptr;
 	Buffer* buf = nullptr;
 	string bufName;
 	map<string, Buffer*> bufMap;

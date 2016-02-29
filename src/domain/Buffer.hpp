@@ -11,7 +11,7 @@
 #include <fstream>
 #include <unordered_map>
 
-#include "Window.hpp"
+#include "Curse.hpp"
 
 using namespace std;
 
@@ -25,13 +25,19 @@ class Buffer {
 	string bufName;
 	vector<string> data;
 	bool selectActive = false;
-	Window* win = nullptr;
+	Win* mainWin = nullptr;
+	Win* stsWin = nullptr;
+	Win* messWin = nullptr;
+	Win* cmdWin = nullptr;
 public:
-	Buffer(const string& bufName, const string& fileName = "", Window* = nullptr);
+	Buffer(const string& bufName, const string& fileName = "", Win* mainWin = nullptr,
+			Win* stsWin = nullptr, Win* messWin = nullptr, Win* cmdWin = nullptr);
 	int readFile(const string& fileName = "");
 	bool fileExists();
 	int getLines();
 	void insertChar(int key);
 	void dump();
+	void setFocus();
+	Win* getMainWin();
 };
 

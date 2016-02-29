@@ -4,14 +4,14 @@
 #include <fstream>
 
 
-class Tty {
+class Curse {
 	int height;
 	int width;
 	int cmdRow;
 	int messRow;
 public:
-	Tty();
-	~Tty();
+	Curse();
+	~Curse();
 	void pos(int row, int col);
 	void print(char c);
 	int getHeight();

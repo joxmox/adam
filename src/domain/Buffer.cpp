@@ -17,12 +17,12 @@
 using namespace std;
 using namespace log4cxx;
 
-Buffer::Buffer(const string& bufName, const string& fileName, Window* win): win(win) {
+Buffer::Buffer(const string& bufName, const string& fileName, Win* mainWin, Win* stsWin, Win* messWin, Win* cmdWin):
+		fileName(fileName), mainWin(mainWin), stsWin(stsWin), messWin(messWin), cmdWin(cmdWin) {
 	LoggerPtr logger{Logger::getLogger("Buffer")};
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
 	this->bufName = bufName;
 	if (!fileName.empty()) {
-		this->fileName = fileName;
 		readFile();
 	}
 	maxLine = -1;
@@ -36,6 +36,7 @@ int Buffer::readFile(const string& fileName) {
 	if (readFile.empty()) readFile = this->fileName;
 	LOG4CXX_DEBUG(logger, "loading file " << readFile << " into buffer");
 	ifstream inf{readFile};
+	maxLine = 0;
 	if (inf) {
 		string line;
 		while (getline(inf, line)) {
@@ -45,6 +46,12 @@ int Buffer::readFile(const string& fileName) {
 			row++;
 		}
 		--row;
+		stsWin->pos(0, 0);
+		stsWin->print(" Buffer: " + readFile);
+		stsWin->refresh();
+		messWin->pos(0, 0);
+		messWin->print(to_string(maxLine) + " lines read from file " + readFile);
+		messWin->refresh();
 		return maxLine + 1;
 	}
 	return 0;
@@ -62,8 +69,10 @@ int Buffer::getLines() {
 void Buffer::insertChar(int key) {
 	LoggerPtr logger{Logger::getLogger("Buffer.insertChar")};
 	LOG4CXX_DEBUG(logger, "inserting char: " << key);
+	mainWin->pos(row, col);
+	mainWin->print(key);
 	data[row].insert(col++, string(1, key));
-	win->printChar(key);
+	mainWin->pos(row, col);
 }
 
 void Buffer::dump() {
@@ -76,4 +85,13 @@ void Buffer::dump() {
 	}
 }
 
+void Buffer::setFocus() {
+	LoggerPtr logger{Logger::getLogger("Buffer.focus")};
+	LOG4CXX_DEBUG(logger, "giving focus to mainWin, id=" << mainWin->getId());
+	mainWin->refresh();
+}
+
+Win* Buffer::getMainWin() {
+	return mainWin;
+}
 

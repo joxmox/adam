@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-#include "Tty.hpp"
+#include "Curse.hpp"
 
 using namespace std;
 
@@ -26,7 +26,7 @@ private:
 	static int winCnt;
 	int winId = 0;
 	int stsWin;
-	Tty* tty;
+	Curse* tty;
 	scrMode mode;
 	string stsBuf = "MAIN";
 	string stsWrt = "Write";
@@ -34,7 +34,7 @@ private:
 	string stsDir = "Forward";
 	void moveTty(int row, int col);
 public:
-	Window(Tty* tty, scrMode mode = full);
+	Window(Curse* tty, scrMode mode = full);
 	void initScreen();
 	void printStatus();
 	void printChar(int key);
