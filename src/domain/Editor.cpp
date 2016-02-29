@@ -83,10 +83,9 @@ void Editor::setDisp(int key, funcFun f) {
 
 void Editor::setDisp(int key1, int key2, funcFun f) {
 	for (int i = key1; i <= key2; i++) {
-	    disMap[i] = f;
+	    setDisp(i, f);
 	}
 }
-
 
 
 void Editor::initDispatch() {
