@@ -40,6 +40,11 @@ class Editor {
 	void initDispatch();
 	void setDisp(int key, funcFun f);
 	void setDisp(int key1, int key2, funcFun f);
+	static void cbIllegalChar(Editor* ed);
+	static void cbNormChar(Editor* ed);
+	static void cbExit(Editor* ed);
+	static void cbDebug(Editor* ed);
+
 public:
 	Editor(const string& fileName);
 	~Editor();

@@ -15,7 +15,6 @@
 
 #include "Buffer.hpp"
 #include "Curse.hpp"
-#include "functions.hpp"
 #include "Editor.hpp"
 
 using namespace std;
@@ -90,10 +89,10 @@ void Editor::setDisp(int key1, int key2, funcFun f) {
 
 void Editor::initDispatch() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
-	disMap = funcVec {1000, fun::illegalChar};
-	setDisp(4, fun::debug);
-	setDisp(26, fun::exit);
-	setDisp(32, 126, fun::character);
+	disMap = funcVec {1000, cbIllegalChar};
+	setDisp(4, cbDebug);
+	setDisp(26, cbExit);
+	setDisp(32, 126, cbNormChar);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
@@ -109,7 +108,24 @@ void Editor::debug() {
 	buf->dump();
 }
 
+void Editor::cbIllegalChar(Editor* ed) {
+	LoggerPtr logger{Logger::getLogger("Editor.cbIllegal")};
+	LOG4CXX_DEBUG(logger, "received unexpected character: " << ed->getKey());
+}
 
+void Editor::cbNormChar(Editor* ed) {
+	LoggerPtr logger{Logger::getLogger("Editor.cbNormChar")};
+	LOG4CXX_DEBUG(logger, "received normal typing character: " << ed->getKey() << " - " << char(ed->getKey()));
+	ed->insertChar();
+}
+
+void Editor::cbExit(Editor* ed) {
+	ed->quit();
+}
+
+void Editor::cbDebug(Editor* ed) {
+	ed->debug();
+}
 
 
 

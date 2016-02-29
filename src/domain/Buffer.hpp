@@ -16,6 +16,7 @@
 using namespace std;
 
 class Buffer {
+	const string eobStr = "[End of buffer]";
 	int topLine;
 	int maxLine;
 	int curLine;
@@ -33,6 +34,7 @@ class Buffer {
 	Win* messWin = nullptr;
 	Win* cmdWin = nullptr;
 	void updateStatus();
+	void printMessage(const string& str);
 
 public:
 	Buffer(const string& bufName, const string& fileName = "", Win* mainWin = nullptr,

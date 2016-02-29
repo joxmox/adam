@@ -36,6 +36,12 @@ void Buffer::updateStatus() {
 	stsWin->refresh();
 }
 
+void Buffer::printMessage(const string& str) {
+	messWin->pos(0, 0);
+	messWin->print(str);
+	messWin->refresh();
+}
+
 int Buffer::readFile(const string& fileName) {
 	LoggerPtr logger{Logger::getLogger("Buffer.readFile")};
 	string readFile = fileName;
@@ -47,23 +53,19 @@ int Buffer::readFile(const string& fileName) {
 		string line;
 		while (getline(inf, line)) {
 			data.push_back(line);
+			mainWin->pos(row , col);
+			mainWin->print(line);
 			maxLine++;
-			col = line.size();
+			col = 0;
 			row++;
 		}
-		--row;
-		updateStatus();
-		messWin->pos(0, 0);
-		messWin->print(to_string(maxLine) + " lines read from file " + readFile);
-		messWin->refresh();
-		return maxLine + 1;
+		printMessage(to_string(maxLine) + " lines read from file " + this->fileName);
 	} else {
-		updateStatus();
-		messWin->pos(0, 0);
-		messWin->print("Editing new file.  Could not find: " + this->fileName);
-		messWin->refresh();
+		printMessage("Editing new file.  Could not find: " + this->fileName);
+		data.push_back(string {});
 	}
-	return -1;
+	updateStatus();
+	return maxLine;
 }
 
 bool Buffer::fileExists() {
@@ -78,6 +80,14 @@ int Buffer::getLines() {
 void Buffer::insertChar(int key) {
 	LoggerPtr logger{Logger::getLogger("Buffer.insertChar")};
 	LOG4CXX_DEBUG(logger, "inserting char: " << key);
+	if (row > data.size()) {
+		LOG4CXX_ERROR(logger, "cursor way too far down - should not happen");
+		throw logic_error("error");
+	}
+	if (row == data.size()) {
+		LOG4CXX_DEBUG(logger, "cursor one row down - adding line to buffer");
+		data.push_back(string {});
+	}
 	mainWin->pos(row, col);
 	mainWin->print(key);
 	data[row].insert(col++, string(1, key));
@@ -97,10 +107,13 @@ void Buffer::dump() {
 void Buffer::setFocus() {
 	LoggerPtr logger{Logger::getLogger("Buffer.focus")};
 	LOG4CXX_DEBUG(logger, "giving focus to mainWin, id=" << mainWin->getId());
+	mainWin->pos(row, col);
 	mainWin->refresh();
 }
 
 Win* Buffer::getMainWin() {
 	return mainWin;
 }
+
+
 

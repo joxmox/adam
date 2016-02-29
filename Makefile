@@ -121,7 +121,7 @@ $(objLib)Curse.o : $(utl)Curse.cpp $(utl)Curse.hpp
 $(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp 
 	$(compile)
 
-$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp $(dom)functions.hpp 
+$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp
 	$(compile)
 
 
