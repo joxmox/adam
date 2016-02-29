@@ -53,9 +53,9 @@ void Editor::edit() {
 	bufName = getBufferName(fileName);
 	buf = new Buffer(bufName, fileName, mainWin, stsWin, messWin, cmdWin);
 	bufMap[bufName] = buf;
-	if (buf->fileExists()) {
-		int readLines = buf->getLines();
-		LOG4CXX_DEBUG(logger, readLines << " lines read from file");
+	int sts = buf->readFile();
+	if (sts >= 0) {
+		LOG4CXX_DEBUG(logger, sts << " lines read from file");
 	} else {
 		LOG4CXX_DEBUG(logger, "editing new file");
 	}

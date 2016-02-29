@@ -110,6 +110,33 @@ void Curse::print(int id, const string& s) {
 	if (sts != OK) LOG4CXX_ERROR(logger, "unexpected return code from waddstr: " << sts);
 }
 
+void Curse::setAttr(int id, curseAttrs attr) {
+	LoggerPtr logger{Logger::getLogger("Curse.setAttr")};
+	int a = 0;
+	if (attr & attRev) {
+		LOG4CXX_TRACE(logger, "setting REVERSE attribute");
+		a |= A_REVERSE;
+	}
+	if (attr & attBold) {
+		LOG4CXX_TRACE(logger, "setting BOLD attribute");
+		a |= A_BOLD;
+	}	wattron(static_cast<WINDOW*>(winMap[id]), a);
+}
+
+void Curse::clearAttr(int id, curseAttrs attr) {
+	LoggerPtr logger{Logger::getLogger("Curse.clearAttr")};
+	int a = 0;
+	if (attr & attRev) {
+		LOG4CXX_TRACE(logger, "clearing REVERSE attribute");
+		a |= A_REVERSE;
+	}
+	if (attr & attBold) {
+		LOG4CXX_TRACE(logger, "clearing BOLD attribute");
+		a |= A_BOLD;
+	}
+	wattroff(static_cast<WINDOW*>(winMap[id]), a);
+}
+
 Win::Win(int height, int width, int row, int col, int id, Curse* curse): height(height), width(width), row(row), col(col), id(id), curse(curse) {
 }
 
@@ -119,6 +146,14 @@ Win::~Win() {
 
 int Win::getId() {
 	return id;
+}
+
+int Win::getHeight() {
+	return height;
+}
+
+int Win::getWidth() {
+	return width;
 }
 
 void Win::pos(int row, int col) {
@@ -140,3 +175,14 @@ void Win::refresh() {
 int Win::readKey() {
 	return curse->readKey(id);
 }
+
+void Win::setAttr(curseAttrs attr) {
+	curse->setAttr(id, attr);
+}
+
+void Win::clearAttr(curseAttrs attr) {
+	curse->clearAttr(id, attr);
+}
+
+
+

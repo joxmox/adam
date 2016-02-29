@@ -1,12 +1,12 @@
 #pragma once
 
-#include <map>
 #include <vector>
-#include <fstream>
 
 using namespace std;
 
 class Win;
+enum curseAttrs {attRev = 1, attBold = 2};
+
 
 class Curse {
 	int height;
@@ -24,6 +24,8 @@ public:
 	int getWidth();
 	int readKey(int id);
 	void refresh(int id = -1);
+	void setAttr(int id, curseAttrs attr);
+	void clearAttr(int id, curseAttrs attr);
 };
 
 class Win {
@@ -37,9 +39,13 @@ public:
 	Win(int height, int width, int row, int col, int id, Curse* curse);
 	~Win();
 	int getId();
+	int getHeight();
+	int getWidth();
 	void pos(int row, int col);
 	void print(char c);
 	void print(const string& s);
 	void refresh();
 	int readKey();
+	void setAttr(curseAttrs attr);
+	void clearAttr(curseAttrs attr);
 };

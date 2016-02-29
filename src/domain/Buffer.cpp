@@ -18,16 +18,22 @@ using namespace std;
 using namespace log4cxx;
 
 Buffer::Buffer(const string& bufName, const string& fileName, Win* mainWin, Win* stsWin, Win* messWin, Win* cmdWin):
-		fileName(fileName), mainWin(mainWin), stsWin(stsWin), messWin(messWin), cmdWin(cmdWin) {
+		fileName(fileName), bufName(bufName), mainWin(mainWin), stsWin(stsWin), messWin(messWin), cmdWin(cmdWin) {
 	LoggerPtr logger{Logger::getLogger("Buffer")};
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
-	this->bufName = bufName;
-	if (!fileName.empty()) {
-		readFile();
-	}
 	maxLine = -1;
 	topLine = 0;
 	curLine = 0;
+}
+
+void Buffer::updateStatus() {
+	string preStr { " Buffer: " + bufName };
+	string postStr { "| " + stsWrite + " | " + stsInsert + " | " + stsDirection + " " };
+	stsWin->pos(0, 0);
+	stsWin->setAttr(attRev);
+	stsWin->print(preStr + string(stsWin->getWidth() - preStr.size() - postStr.size(), ' ') + postStr);
+	stsWin->clearAttr(attRev);
+	stsWin->refresh();
 }
 
 int Buffer::readFile(const string& fileName) {
@@ -46,15 +52,18 @@ int Buffer::readFile(const string& fileName) {
 			row++;
 		}
 		--row;
-		stsWin->pos(0, 0);
-		stsWin->print(" Buffer: " + readFile);
-		stsWin->refresh();
+		updateStatus();
 		messWin->pos(0, 0);
 		messWin->print(to_string(maxLine) + " lines read from file " + readFile);
 		messWin->refresh();
 		return maxLine + 1;
+	} else {
+		updateStatus();
+		messWin->pos(0, 0);
+		messWin->print("Editing new file.  Could not find: " + this->fileName);
+		messWin->refresh();
 	}
-	return 0;
+	return -1;
 }
 
 bool Buffer::fileExists() {
