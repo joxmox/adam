@@ -44,12 +44,17 @@ class Editor {
 	static void cbNormChar(Editor* ed);
 	static void cbExit(Editor* ed);
 	static void cbDebug(Editor* ed);
+	static void cbMoveUp(Editor* ed);
+	static void cbMoveDown(Editor* ed);
+	static void cbMoveLeft(Editor* ed);
+	static void cbMoveRight(Editor* ed);
 
 public:
 	Editor(const string& fileName);
 	~Editor();
 	void edit();
 	int getKey();
+	Buffer* getBuffer();
 	void quit();
 	void insertChar();
 	void debug();

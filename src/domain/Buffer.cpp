@@ -94,6 +94,38 @@ void Buffer::insertChar(int key) {
 	mainWin->pos(row, col);
 }
 
+void Buffer::moveUp() {
+	LoggerPtr logger{Logger::getLogger("Buffer.moveUp")};
+	LOG4CXX_TRACE(logger, "enter");
+	if (row > 0) row--;
+	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Buffer::moveDown() {
+	LoggerPtr logger{Logger::getLogger("Buffer.moveDown")};
+	LOG4CXX_TRACE(logger, "enter");
+	row++;
+	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Buffer::moveLeft() {
+	LoggerPtr logger{Logger::getLogger("Buffer.moveLeft")};
+	LOG4CXX_TRACE(logger, "enter");
+	if (col > 0) {
+		col--;
+	} else {
+		printMessage("Already at start of line."); //FIXME: check text with eve
+	}
+	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Buffer::moveRight() {
+	LoggerPtr logger{Logger::getLogger("Buffer.moveRight")};
+	LOG4CXX_TRACE(logger, "enter");
+	col++;
+	LOG4CXX_TRACE(logger, "exit");
+}
+
 void Buffer::dump() {
 	LoggerPtr logger{Logger::getLogger("Buffer.dump")};
 	LOG4CXX_DEBUG(logger, "row: " << row);

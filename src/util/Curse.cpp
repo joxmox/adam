@@ -44,6 +44,7 @@ Curse::~Curse() {
 Win* Curse::creWin(int height, int width, int row, int col) {
 	LoggerPtr logger{Logger::getLogger("Curse.creWin")};
 	WINDOW* z = newwin(height, width, row, col);
+	keypad(z, true);
 	LOG4CXX_DEBUG(logger, "created window with id = " << winMap.size());
 	winMap.push_back(static_cast<void*>(z));
 	Win* w = new Win {height, width, row, col, int(winMap.size()) - 1, this};

@@ -46,5 +46,9 @@ public:
 	void dump();
 	void setFocus();
 	Win* getMainWin();
+	void moveUp();
+	void moveDown();
+	void moveLeft();
+	void moveRight();
 };
 

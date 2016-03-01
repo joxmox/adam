@@ -36,6 +36,10 @@ int Editor::getKey() {
 	return key;
 }
 
+Buffer* Editor::getBuffer() {
+	return buf;
+}
+
 void Editor::quit() {
 	loop = false;
 }
@@ -93,14 +97,14 @@ void Editor::initDispatch() {
 	setDisp(4, cbDebug);
 	setDisp(26, cbExit);
 	setDisp(32, 126, cbNormChar);
+	setDisp(258, cbMoveDown);
+	setDisp(259, cbMoveUp);
+	setDisp(260, cbMoveLeft);
+	setDisp(261, cbMoveRight);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
-void Editor::insertChar() {
-	LoggerPtr logger{Logger::getLogger(string("Editor") + string(__func__))};
-	LOG4CXX_DEBUG(logger, "inserting character");
-	buf->insertChar(key);
-}
+
 
 void Editor::debug() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
@@ -113,19 +117,13 @@ void Editor::cbIllegalChar(Editor* ed) {
 	LOG4CXX_DEBUG(logger, "received unexpected character: " << ed->getKey());
 }
 
-void Editor::cbNormChar(Editor* ed) {
-	LoggerPtr logger{Logger::getLogger("Editor.cbNormChar")};
-	LOG4CXX_DEBUG(logger, "received normal typing character: " << ed->getKey() << " - " << char(ed->getKey()));
-	ed->insertChar();
-}
-
-void Editor::cbExit(Editor* ed) {
-	ed->quit();
-}
-
-void Editor::cbDebug(Editor* ed) {
-	ed->debug();
-}
+void Editor::cbNormChar(Editor* ed) {ed->getBuffer()->insertChar(ed->getKey());}
+void Editor::cbExit(Editor* ed) {ed->quit();}
+void Editor::cbDebug(Editor* ed) {ed->debug();}
+void Editor::cbMoveUp(Editor* ed) {ed->getBuffer()->moveUp();}
+void Editor::cbMoveDown(Editor* ed) {ed->getBuffer()->moveDown();}
+void Editor::cbMoveLeft(Editor* ed) {ed->getBuffer()->moveLeft();}
+void Editor::cbMoveRight(Editor* ed) {ed->getBuffer()->moveRight();}
 
 
 
