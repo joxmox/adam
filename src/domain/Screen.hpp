@@ -12,9 +12,9 @@
 
 class Screen : public Win {
 	Curse* cur;
+	Win* cmdWin;
+	Win* messWin;
 	Win* stsWin = nullptr;
-	Win* cmdWin = nullptr;
-	Win* messWin = nullptr;
 public:
 	~Screen() = default;
 	Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin = nullptr, Win* messWin = nullptr);

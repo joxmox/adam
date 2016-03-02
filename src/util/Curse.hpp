@@ -15,8 +15,30 @@ class Curse {
 public:
 	Curse();
 	~Curse();
+
+	/**
+	 * The normal way to construct Win object. In some cases you will create the window
+	 * object yourself, such as in a inherited class. The the subclass should u
+	 * @param height Height of Window
+	 * @param width Width of Window
+	 * @param row Row where to anchor the window to the screen
+	 * @param col Column where to anchor the window to the screen
+	 */
 	Win* creWin(int height, int width, int row, int col);
+
+	/** If the Win object is already created we still need to create a curses WINDOW object
+	 * without creating an extra Win instance. This is the function to use then.
+	 * @param height Height of Window
+	 * @param width Width of Window
+	 * @param row Row where to anchor the window to the screen
+	 * @param col Column where to anchor the window to the screen
+	 */
 	int addWin(int height, int width, int row, int col);
+
+	/** This function deletes a Win object and its associated curses Window.
+	 * Right now only the curses Window is deleted...
+	 * @param id Window identification
+	 */
 	void delWin(int id);
 	void pos(int id, int row, int col);
 	void insertChar(int id, char c);

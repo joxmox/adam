@@ -17,8 +17,7 @@ using namespace std;
 using namespace log4cxx;
 
 Screen::Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin, Win* messWin) :
-		cur(cur), cmdWin(cmdWin), messWin(messWin), Win(cur, 10, 20, 0, 0) {
-//	mainWin = cur->creWin(cur->getHeight() - 3, cur->getWidth(), 0, 0);
+		Win(cur, cur->getHeight(), cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
 	LoggerPtr logger{Logger::getLogger("Screen")};
 	stsWin = cur->creWin(1, cur->getWidth(), cur->getHeight() - 3, 0);
 }
