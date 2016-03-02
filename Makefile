@@ -104,7 +104,7 @@ lib_assemble :
 
 util_compile : $(objLib)stringUtils.o $(objLib)Curse.o 
 
-domain_compile : $(objLib)Buffer.o $(objLib)Editor.o
+domain_compile : $(objLib)Buffer.o $(objLib)Editor.o $(objLib)Screen.o
 
 
 # -----------------------
@@ -118,10 +118,13 @@ $(objLib)stringUtils.o : $(utl)stringUtils.cpp $(utl)stringUtils.hpp
 $(objLib)Curse.o : $(utl)Curse.cpp $(utl)Curse.hpp 
 	$(compile)
 	
-$(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp 
+$(objLib)Screen.o : $(dom)Screen.cpp $(dom)Screen.hpp $(utl)Curse.hpp
+	$(compile)
+	
+$(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp $(dom)Screen.hpp
 	$(compile)
 
-$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp
+$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp $(dom)Screen.hpp
 	$(compile)
 
 

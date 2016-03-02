@@ -12,6 +12,7 @@
 #include <unordered_map>
 
 #include "Curse.hpp"
+#include "Screen.hpp"
 
 using namespace std;
 
@@ -29,16 +30,17 @@ class Buffer {
 	string bufName;
 	vector<string> data;
 	bool selectActive = false;
-	Win* mainWin = nullptr;
-	Win* stsWin = nullptr;
-	Win* messWin = nullptr;
-	Win* cmdWin = nullptr;
+	Screen* scr;
+//	Win* mainWin = nullptr;
+//	Win* stsWin = nullptr;
+//	Win* messWin = nullptr;
+//	Win* cmdWin = nullptr;
 	void updateStatus();
 	void printMessage(const string& str);
+	void adjustBuffer();
 
 public:
-	Buffer(const string& bufName, const string& fileName = "", Win* mainWin = nullptr,
-			Win* stsWin = nullptr, Win* messWin = nullptr, Win* cmdWin = nullptr);
+	Buffer(const string& bufName, const string& fileName = "", Screen* scr = nullptr);
 	int readFile(const string& fileName = "");
 	bool fileExists();
 	int getLines();
@@ -50,5 +52,7 @@ public:
 	void moveDown();
 	void moveLeft();
 	void moveRight();
+	void insertBreak();
+	void deleteChar();
 };
 

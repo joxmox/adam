@@ -13,12 +13,12 @@
 #include "log4cxx/propertyconfigurator.h"
 
 #include "Buffer.hpp"
+#include "Screen.hpp"
 
 using namespace std;
 using namespace log4cxx;
 
-Buffer::Buffer(const string& bufName, const string& fileName, Win* mainWin, Win* stsWin, Win* messWin, Win* cmdWin):
-		fileName(fileName), bufName(bufName), mainWin(mainWin), stsWin(stsWin), messWin(messWin), cmdWin(cmdWin) {
+Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr): fileName(fileName), bufName(bufName), scr(scr) {
 	LoggerPtr logger{Logger::getLogger("Buffer")};
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
 	maxLine = -1;
@@ -27,19 +27,11 @@ Buffer::Buffer(const string& bufName, const string& fileName, Win* mainWin, Win*
 }
 
 void Buffer::updateStatus() {
-	string preStr { " Buffer: " + bufName };
-	string postStr { "| " + stsWrite + " | " + stsInsert + " | " + stsDirection + " " };
-	stsWin->pos(0, 0);
-	stsWin->setAttr(attRev);
-	stsWin->print(preStr + string(stsWin->getWidth() - preStr.size() - postStr.size(), ' ') + postStr);
-	stsWin->clearAttr(attRev);
-	stsWin->refresh();
+	scr->setStatus(" Buffer: " + bufName, "| " + stsWrite + " | " + stsInsert + " | " + stsDirection + " ");
 }
 
 void Buffer::printMessage(const string& str) {
-	messWin->pos(0, 0);
-	messWin->print(str);
-	messWin->refresh();
+	scr->printMessage(str);
 }
 
 int Buffer::readFile(const string& fileName) {
@@ -53,8 +45,8 @@ int Buffer::readFile(const string& fileName) {
 		string line;
 		while (getline(inf, line)) {
 			data.push_back(line);
-			mainWin->pos(row , col);
-			mainWin->print(line);
+			scr->printStr(line);
+			scr->moveDown();
 			maxLine++;
 			col = 0;
 			row++;
@@ -77,34 +69,42 @@ int Buffer::getLines() {
 	return maxLine;
 }
 
-void Buffer::insertChar(int key) {
-	LoggerPtr logger{Logger::getLogger("Buffer.insertChar")};
-	LOG4CXX_DEBUG(logger, "inserting char: " << key);
+void Buffer::adjustBuffer() {
+	LoggerPtr logger{Logger::getLogger("Buffer.adjustBuffer")};
 	if (row > data.size()) {
 		LOG4CXX_ERROR(logger, "cursor way too far down - should not happen");
 		throw logic_error("error");
 	}
 	if (row == data.size()) {
 		LOG4CXX_DEBUG(logger, "cursor one row down - adding line to buffer");
-		data.push_back(string {});
+		data.push_back(string { });
 	}
-	mainWin->pos(row, col);
-	mainWin->print(key);
+}
+
+void Buffer::insertChar(int key) {
+	LoggerPtr logger{Logger::getLogger("Buffer.insertChar")};
+	LOG4CXX_DEBUG(logger, "inserting char: " << key);
+	adjustBuffer();
+	scr->insertChar(key);
+	scr->move(0, 1);
 	data[row].insert(col++, string(1, key));
-	mainWin->pos(row, col);
 }
 
 void Buffer::moveUp() {
 	LoggerPtr logger{Logger::getLogger("Buffer.moveUp")};
 	LOG4CXX_TRACE(logger, "enter");
-	if (row > 0) row--;
+	if (row > 0) {
+		scr->moveUp(data[--row]);
+	}
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Buffer::moveDown() {
 	LoggerPtr logger{Logger::getLogger("Buffer.moveDown")};
 	LOG4CXX_TRACE(logger, "enter");
-	row++;
+	if (row < data.size()) {
+		scr->moveDown(data[++row]);
+	}
 	LOG4CXX_TRACE(logger, "exit");
 }
 
@@ -113,6 +113,7 @@ void Buffer::moveLeft() {
 	LOG4CXX_TRACE(logger, "enter");
 	if (col > 0) {
 		col--;
+		scr->move(0, -1);
 	} else {
 		printMessage("Already at start of line."); //FIXME: check text with eve
 	}
@@ -123,7 +124,71 @@ void Buffer::moveRight() {
 	LoggerPtr logger{Logger::getLogger("Buffer.moveRight")};
 	LOG4CXX_TRACE(logger, "enter");
 	col++;
+	scr->move(0, 1);
 	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Buffer::insertBreak() {
+	adjustBuffer();
+	string tmp = data[row].substr(col);
+	data[row].erase(col, string::npos);
+	scr->clearEol();
+	scr->setCol(0);
+	scr->move(1, 0);
+	scr->insertLine();
+	scr->printStr(tmp);
+	data.insert(data.begin() + ++row, tmp);
+	col = 0;
+}
+
+
+void Buffer::deleteChar() {
+	LoggerPtr logger{Logger::getLogger("Buffer.deleteChar")};
+	LOG4CXX_TRACE(logger, "enter");
+	adjustBuffer();
+	if (col > 0) {
+		LOG4CXX_TRACE(logger, "cursor in the wild - remove single char");
+		data[row].erase(--col, 1);
+		scr->move(0, -1);
+		scr->delChar();
+	} else {
+		LOG4CXX_TRACE(logger, "cursor at leftmost position - join lines");
+		if (row > 0) {
+			scr->delLine();
+			scr->pos(scr->getRow() - 1, data[row - 1].size());
+			scr->debug();
+			scr->printStr(data[row]);
+			scr->debug();
+			col = data[row - 1].size();
+			data[row - 1] += data[row];
+			data.erase(data.begin() + row--);
+		}
+		LOG4CXX_TRACE(logger, "exit");
+	}
+
+//	DBG << "enter" << endl;
+//	adjust();
+//	if (pos.getCol() > 0) {
+//		tty->move(--pos);
+//		tty->delChar();
+//		buf->delChar();
+//	} else {
+//		int br = buf->getRow();
+//		DBG << "Buffer row: " << br << endl;
+//		if (br > 0) {
+//			int nc = buf->joinLines();
+//			DBG << "new column: " << nc << endl;
+//			tty->delLine();
+//			pos.moveUp();
+//			tty->move(pos);
+//			DBG << "new pos (after move up): " << pos << endl;
+//			tty->print(buf->getCurLine());
+//			tty->move(siz.getLowLeft());
+//			tty->print(buf->getLine(siz.getEndRow() + br - pos.getRow() - 1));
+//			pos.setCol(nc);
+//			buf->recalcMarks(-1);
+//		}
+//	}
 }
 
 void Buffer::dump() {
@@ -138,13 +203,12 @@ void Buffer::dump() {
 
 void Buffer::setFocus() {
 	LoggerPtr logger{Logger::getLogger("Buffer.focus")};
-	LOG4CXX_DEBUG(logger, "giving focus to mainWin, id=" << mainWin->getId());
-	mainWin->pos(row, col);
-	mainWin->refresh();
+	LOG4CXX_DEBUG(logger, "giving focus to screen main window, id=" << scr->getId());
+	scr->refresh();
 }
 
 Win* Buffer::getMainWin() {
-	return mainWin;
+	return scr;
 }
 
 

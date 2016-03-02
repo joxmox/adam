@@ -41,14 +41,27 @@ Curse::~Curse() {
 	endwin();
 }
 
+
 Win* Curse::creWin(int height, int width, int row, int col) {
 	LoggerPtr logger{Logger::getLogger("Curse.creWin")};
 	WINDOW* z = newwin(height, width, row, col);
 	keypad(z, true);
-	LOG4CXX_DEBUG(logger, "created window with id = " << winMap.size());
+	LOG4CXX_DEBUG(logger, "created window " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
+	LOG4CXX_DEBUG(logger, "z = " << reinterpret_cast<long>(z));
 	winMap.push_back(static_cast<void*>(z));
 	Win* w = new Win {height, width, row, col, int(winMap.size()) - 1, this};
 	return w;
+}
+
+int Curse::addWin(int height, int width, int row, int col) {
+	LoggerPtr logger{Logger::getLogger("Curse.addWin")};
+	WINDOW* z = newwin(height, width, row, col);
+	keypad(z, true);
+	LOG4CXX_DEBUG(logger, "created window " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
+	LOG4CXX_DEBUG(logger, "WINDOW* = " << reinterpret_cast<long>(z));
+	winMap.push_back(static_cast<void*>(z));
+	LOG4CXX_DEBUG(logger, "adding window with id = " << winMap.size() - 1);
+	return winMap.size() - 1;
 }
 
 void Curse::delWin(int id) {
@@ -61,6 +74,8 @@ void Curse::delWin(int id) {
 		LOG4CXX_WARN(logger, "window is NULL. no action taken");
 	}
 }
+
+
 
 int Curse::getWidth() {
 	return width;
@@ -82,7 +97,7 @@ void Curse::pos(int id, int row, int col) {
 	wmove(static_cast<WINDOW*>(winMap[id]), row, col);
 }
 
-void Curse::print(int id, char c) {
+void Curse::insertChar(int id, char c) {
 	LoggerPtr logger{Logger::getLogger("Curse.print")};
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", chr=" << c);
 	int sts = winsch(static_cast<WINDOW*>(winMap[id]), c);
@@ -103,7 +118,7 @@ void Curse::refresh(int id) {
 	}
 }
 
-void Curse::print(int id, const string& s) {
+void Curse::printStr(int id, const string& s) {
 	LoggerPtr logger{Logger::getLogger("Curse.print")};
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", str=" << s);
 	int sts = waddstr(static_cast<WINDOW*>(winMap[id]), s.c_str());
@@ -138,8 +153,40 @@ void Curse::clearAttr(int id, curseAttrs attr) {
 	wattroff(static_cast<WINDOW*>(winMap[id]), a);
 }
 
+void Curse::clearEol(int id) {
+	LoggerPtr logger{Logger::getLogger("Curse.clearEol")};
+	int sts = wclrtoeol(static_cast<WINDOW*>(winMap[id]));
+	LOG4CXX_DEBUG(logger, "id = " << id << ", status = " << sts);
+}
+
+void Curse::insertLine(int id) {
+	LoggerPtr logger{Logger::getLogger("Curse.insertLine")};
+	LOG4CXX_TRACE(logger, "enter");
+	winsertln(static_cast<WINDOW*>(winMap[id]));
+	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Curse::delChar(int id) {
+	LoggerPtr logger{Logger::getLogger("Curse.delChar")};
+	LOG4CXX_TRACE(logger, "enter");
+	wdelch(static_cast<WINDOW*>(winMap[id]));
+	LOG4CXX_TRACE(logger, "exit");
+}
+
+void Curse::delLine(int id) {
+	LoggerPtr logger{Logger::getLogger("Curse.delLine")};
+	LOG4CXX_TRACE(logger, "enter");
+	wdeleteln(static_cast<WINDOW*>(winMap[id]));
+	LOG4CXX_TRACE(logger, "exit");
+}
+
 Win::Win(int height, int width, int row, int col, int id, Curse* curse): height(height), width(width), row(row), col(col), id(id), curse(curse) {
 }
+
+Win::Win(Curse* curse, int height, int width, int row, int col): height(height), width(width), row(row), col(col), curse(curse) {
+	id = curse->addWin(height, width, row, col);
+}
+
 
 Win::~Win() {
 	curse->delWin(id);
@@ -158,15 +205,53 @@ int Win::getWidth() {
 }
 
 void Win::pos(int row, int col) {
+	this->row = row;
+	this->col = col;
 	curse->pos(id, row, col);
 }
 
-void Win::print(char c) {
-	curse->print(id, c);
+void Win::move(int rows, int cols) {
+	pos(row + rows, col + cols);
 }
 
-void Win::print(const string& s) {
-	curse->print(id, s);
+void Win::moveUp(const string& str) {
+	if (row == 0) {
+		curse->pos(id, 0, 0);
+		insertLine();
+		printStr(str);
+	} else {
+		row--;
+	}
+	pos(row, col);
+}
+
+void Win::moveDown(const string& str) {
+	if (row + 1 == height) {
+		curse->pos(id, 0, 0);
+		delLine();
+		curse->pos(id, height - 1, 0);
+		printStr(str);
+	} else {
+		row++;
+	}
+	pos(row, col);
+}
+
+void Win::moveLeft(const string& str) {
+
+}
+
+void Win::moveRight(const string& str) {
+
+}
+
+void Win::insertChar(char c) {
+	curse->insertChar(id, c);
+}
+
+void Win::printStr(const string& s) {
+	curse->printStr(id, s);
+	pos(row, col);
 }
 
 void Win::refresh() {
@@ -185,5 +270,42 @@ void Win::clearAttr(curseAttrs attr) {
 	curse->clearAttr(id, attr);
 }
 
+void Win::clearEol() {
+	curse->clearEol(id);
+}
+
+void Win::insertLine() {
+	curse->insertLine(id);
+}
+
+void Win::setRow(int r) {
+	pos(r, col);
+}
+
+void Win::setCol(int c) {
+	pos(row, c);
+}
+
+int Win::getRow() {
+	return row;
+}
+
+int Win::getCol() {
+	return col;
+}
+
+void Win::delChar() {
+	curse->delChar(id);
+}
+
+void Win::delLine() {
+	curse->delLine(id);
+}
+
+void Win::debug() {
+	LoggerPtr logger{Logger::getLogger("Curse.debug")};
+	LOG4CXX_DEBUG(logger, "  window id: " << id);
+	LOG4CXX_DEBUG(logger, "  window position: " << row << "," << col);
+}
 
 

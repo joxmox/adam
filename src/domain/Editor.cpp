@@ -16,6 +16,7 @@
 #include "Buffer.hpp"
 #include "Curse.hpp"
 #include "Editor.hpp"
+#include "Screen.hpp"
 
 using namespace std;
 
@@ -47,15 +48,18 @@ void Editor::quit() {
 void Editor::edit() {
 	LoggerPtr logger{Logger::getLogger("Editor.edit")};
 	LOG4CXX_DEBUG(logger, "starting");
+
 	initDispatch();
+
 	tty = new Curse();
-	Win* mainWin = tty->creWin(tty->getHeight() - 3, tty->getWidth(), 0, 0);
-	Win* stsWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 3, 0);
-	cmdWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 2, 0);
-	messWin = tty->creWin(1, tty->getWidth(), tty->getHeight() - 1, 0);
+	Screen* scr = new Screen(tty, 0, 1, 1);
+	messWin = scr->createMessWin();
+	cmdWin = scr->createCmdWin();
+
 	bufName = getBufferName(fileName);
-	buf = new Buffer(bufName, fileName, mainWin, stsWin, messWin, cmdWin);
+	buf = new Buffer(bufName, fileName, scr);
 	bufMap[bufName] = buf;
+
 	int sts = buf->readFile();
 	if (sts >= 0) {
 		LOG4CXX_DEBUG(logger, sts << " lines read from file");
@@ -74,6 +78,7 @@ void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
 		LOG4CXX_TRACE(logger, "waiting for key from terminal");
+		buf->getMainWin()->debug();
 		key = buf->getMainWin()->readKey();
 		LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		disMap[key](this);
@@ -95,12 +100,14 @@ void Editor::initDispatch() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
 	disMap = funcVec {1000, cbIllegalChar};
 	setDisp(4, cbDebug);
+	setDisp(13, cbReturn);
 	setDisp(26, cbExit);
 	setDisp(32, 126, cbNormChar);
 	setDisp(258, cbMoveDown);
 	setDisp(259, cbMoveUp);
 	setDisp(260, cbMoveLeft);
 	setDisp(261, cbMoveRight);
+	setDisp(263, cbBackSpace);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
@@ -110,6 +117,8 @@ void Editor::debug() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
 	LOG4CXX_DEBUG(logger, "dumping buffer:");
 	buf->dump();
+	LOG4CXX_DEBUG(logger, "window info:");
+	buf->getMainWin()->debug();
 }
 
 void Editor::cbIllegalChar(Editor* ed) {
@@ -124,6 +133,8 @@ void Editor::cbMoveUp(Editor* ed) {ed->getBuffer()->moveUp();}
 void Editor::cbMoveDown(Editor* ed) {ed->getBuffer()->moveDown();}
 void Editor::cbMoveLeft(Editor* ed) {ed->getBuffer()->moveLeft();}
 void Editor::cbMoveRight(Editor* ed) {ed->getBuffer()->moveRight();}
+void Editor::cbReturn(Editor* ed) {ed->getBuffer()->insertBreak();}
+void Editor::cbBackSpace(Editor* ed) {ed->getBuffer()->deleteChar();}
 
 
 

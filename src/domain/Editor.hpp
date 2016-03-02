@@ -48,6 +48,8 @@ class Editor {
 	static void cbMoveDown(Editor* ed);
 	static void cbMoveLeft(Editor* ed);
 	static void cbMoveRight(Editor* ed);
+	static void cbReturn(Editor* ed);
+	static void cbBackSpace(Editor* ed);
 
 public:
 	Editor(const string& fileName);
