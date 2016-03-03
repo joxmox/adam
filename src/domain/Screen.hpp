@@ -15,6 +15,7 @@ class Screen : public Win {
 	Win* cmdWin;
 	Win* messWin;
 	Win* stsWin = nullptr;
+	vector<pair<int, int>> posStack;
 public:
 	~Screen() = default;
 	Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin = nullptr, Win* messWin = nullptr);
@@ -22,6 +23,11 @@ public:
 	Win* createMessWin();
 	void setStatus(const string& str1, const string& str2);
 	void printMessage(const string& str);
+	void push();
+	void push(int r, int c);
+	void pop();
+	bool atBottom();
+	int maxRow();
 };
 
 #endif /* DOMAIN_SCREEN_HPP_ */

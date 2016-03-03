@@ -103,7 +103,16 @@ void Buffer::moveDown() {
 	LoggerPtr logger{Logger::getLogger("Buffer.moveDown")};
 	LOG4CXX_TRACE(logger, "enter");
 	if (row < data.size()) {
-		scr->moveDown(data[++row]);
+		row++;
+		if (!scr->atBottom()) {
+			scr->moveDown();
+		} else {
+			scr->push(0, 0);
+			scr->delLine();
+			scr->pos(scr->maxRow(), 0);
+			scr->printStr(data[row]);
+			scr->pop();
+		}
 	}
 	LOG4CXX_TRACE(logger, "exit");
 }
@@ -124,7 +133,10 @@ void Buffer::moveRight() {
 	LoggerPtr logger{Logger::getLogger("Buffer.moveRight")};
 	LOG4CXX_TRACE(logger, "enter");
 	col++;
-	scr->move(0, 1);
+	int w = scr->getWidth();
+	if (scr->getCol() + 1 < w) {
+		scr->move(0, 1);
+	}
 	LOG4CXX_TRACE(logger, "exit");
 }
 

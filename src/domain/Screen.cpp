@@ -17,7 +17,7 @@ using namespace std;
 using namespace log4cxx;
 
 Screen::Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin, Win* messWin) :
-		Win(cur, cur->getHeight(), cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
+		Win(cur, cur->getHeight() -3, cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
 	LoggerPtr logger{Logger::getLogger("Screen")};
 	stsWin = cur->creWin(1, cur->getWidth(), cur->getHeight() - 3, 0);
 }
@@ -54,3 +54,28 @@ void Screen::printMessage(const string& str) {
 	messWin->refresh();
 }
 
+
+void Screen::push() {
+	posStack.push_back({row, col});
+}
+
+void Screen::push(int r, int c) {
+	push(r, c);
+	pos(r, c);
+}
+
+void Screen::pop() {
+	if (posStack.empty()) throw logic_error("position stack is empty - cannot pop");
+	pair<int, int> res {posStack.back()};
+	posStack.pop_back();
+	row = res.first;
+	col = res.second;
+}
+
+bool Screen::atBottom() {
+	return row >= maxRow();
+}
+
+int Screen::maxRow() {
+	return height - 1;
+}
