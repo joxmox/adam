@@ -203,6 +203,51 @@ void Buffer::deleteChar() {
 //	}
 }
 
+void Buffer::gotoSol() {
+	if (col != 0) {
+		col = 0;
+		scr->setCol(0);
+	} else {
+		printMessage("You are already at the start of a line.");
+	}
+}
+
+void Buffer::gotoEol() {
+	int maxRow = data[row].size();
+	if (col != maxRow) {
+		col = maxRow;
+		scr->setCol(maxRow);
+	} else {
+		printMessage("You are already at the end of a line.");
+	}
+}
+
+void Buffer::pageUp() {
+	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
+	int topRow = row - scr->getRow();
+	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
+	int offset = -scr->getHeight() + 2;
+	if (row + offset < 0) {
+		offset = -row;
+	}
+	LOG4CXX_DEBUG(logger, "offset: " << offset);
+	row += offset;
+	scr->repaint(data, max(topRow + offset, 0));
+}
+
+void Buffer::pageDown() {
+	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
+	int topRow = row - scr->getRow();
+	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
+	int offset = scr->getHeight() - 2;
+	if (row + offset > data.size()) {
+		offset = data.size() - row;
+	}
+	LOG4CXX_DEBUG(logger, "offset: " << offset);
+	row += offset;
+	scr->repaint(data, topRow + offset);
+}
+
 void Buffer::dump() {
 	LoggerPtr logger{Logger::getLogger("Buffer.dump")};
 	LOG4CXX_DEBUG(logger, "row: " << row);
@@ -219,7 +264,7 @@ void Buffer::setFocus() {
 	scr->refresh();
 }
 
-Win* Buffer::getMainWin() {
+Screen* Buffer::getMainWin() {
 	return scr;
 }
 

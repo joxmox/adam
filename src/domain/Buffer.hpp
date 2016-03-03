@@ -47,12 +47,16 @@ public:
 	void insertChar(int key);
 	void dump();
 	void setFocus();
-	Win* getMainWin();
+	Screen* getMainWin();
 	void moveUp();
 	void moveDown();
 	void moveLeft();
 	void moveRight();
 	void insertBreak();
 	void deleteChar();
+	void gotoSol();
+	void gotoEol();
+	void pageUp();
+	void pageDown();
 };
 

@@ -17,7 +17,7 @@ using namespace std;
 using namespace log4cxx;
 
 Screen::Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin, Win* messWin) :
-		Win(cur, cur->getHeight() -3, cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
+		Win(cur, cur->getHeight() - 3, cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
 	LoggerPtr logger{Logger::getLogger("Screen")};
 	stsWin = cur->creWin(1, cur->getWidth(), cur->getHeight() - 3, 0);
 }
@@ -79,3 +79,28 @@ bool Screen::atBottom() {
 int Screen::maxRow() {
 	return height - 1;
 }
+
+void Screen::repaint(const vector<string>& data, int topRow) {
+	static LoggerPtr logger{Logger::getLogger("Screen.repaint")};
+	LOG4CXX_DEBUG(logger, "topRow: " << topRow);
+	LOG4CXX_DEBUG(logger, "data size: " << data.size());
+//	push();
+	int r = row;
+	int c = col;
+	for (auto i = 0; i < height; i++) {
+		LOG4CXX_DEBUG(logger, i);
+		pos(i, 0);
+		LOG4CXX_DEBUG(logger, "back");
+		if (topRow + i < data.size()) {
+			string s = data[topRow + i];
+			LOG4CXX_DEBUG(logger, "string: " << s);
+			printStr(s);
+			move(0, s.size());
+		}
+		clearEol();
+	}
+//	pop();
+	pos(r, c);
+}
+
+

@@ -23,11 +23,14 @@ public:
 	Win* createMessWin();
 	void setStatus(const string& str1, const string& str2);
 	void printMessage(const string& str);
+
 	void push();
 	void push(int r, int c);
 	void pop();
 	bool atBottom();
 	int maxRow();
+
+	void repaint(const vector<string>& data, int topRow);
 };
 
 #endif /* DOMAIN_SCREEN_HPP_ */
