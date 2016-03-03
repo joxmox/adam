@@ -210,6 +210,31 @@ void Buffer::gotoEol() {
 	}
 }
 
+void Buffer::pageUp() {
+	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
+	int topRow = row - scr->getRow();
+	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
+	int offset = -scr->getHeight() + 2;
+	if (row + offset < 0) {
+		offset = -row;
+	}
+	LOG4CXX_DEBUG(logger, "offset: " << offset);
+	row += offset;
+	scr->repaint(data, max(topRow + offset, 0));
+}
+
+void Buffer::pageDown() {
+	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
+	int topRow = row - scr->getRow();
+	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
+	int offset = scr->getHeight() - 2;
+	if (row + offset > data.size()) {
+		offset = data.size() - row;
+	}
+	LOG4CXX_DEBUG(logger, "offset: " << offset);
+	row += offset;
+	scr->repaint(data, topRow + offset);
+}
 
 void Buffer::dump() {
 	LoggerPtr logger{Logger::getLogger("Buffer.dump")};

@@ -56,5 +56,7 @@ public:
 	void deleteChar();
 	void gotoSol();
 	void gotoEol();
+	void pageUp();
+	void pageDown();
 };
 

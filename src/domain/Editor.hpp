@@ -62,6 +62,8 @@ class Editor {
 	static void cbStartLearn(Editor* ed);
 	static void cbRemember(Editor* ed);
 	static void cbDoLearned(Editor* ed);
+	static void cbPageUp(Editor* ed);
+	static void cbPageDown(Editor* ed);
 
 public:
 	Editor(const string& fileName);

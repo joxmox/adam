@@ -113,6 +113,8 @@ void Editor::initDispatch() {
 	setDisp(260, cbMoveLeft);
 	setDisp(261, cbMoveRight);
 	setDisp(263, cbBackSpace);
+	setDisp(338, cbPageDown);
+	setDisp(339, cbPageUp);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
@@ -183,6 +185,8 @@ void Editor::cbGotoEol(Editor* ed) {ed->getBuffer()->gotoEol();}
 void Editor::cbStartLearn(Editor* ed) {ed->startLearn();}
 void Editor::cbRemember(Editor* ed) {ed->remember();}
 void Editor::cbDoLearned(Editor* ed) {ed->doLearned();}
+void Editor::cbPageUp(Editor* ed) {ed->getBuffer()->pageUp();}
+void Editor::cbPageDown(Editor* ed) {ed->getBuffer()->pageDown();}
 
 
 

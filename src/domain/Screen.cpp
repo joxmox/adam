@@ -54,3 +54,27 @@ void Screen::printMessage(const string& str) {
 	messWin->refresh();
 }
 
+void Screen::repaint(const vector<string>& data, int topRow) {
+	static LoggerPtr logger{Logger::getLogger("Screen.repaint")};
+	LOG4CXX_DEBUG(logger, "topRow: " << topRow);
+	LOG4CXX_DEBUG(logger, "data size: " << data.size());
+//	push();
+	int r = row;
+	int c = col;
+	for (auto i = 0; i < height; i++) {
+		LOG4CXX_DEBUG(logger, i);
+		pos(i, 0);
+		LOG4CXX_DEBUG(logger, "back");
+		if (topRow + i < data.size()) {
+			string s = data[topRow + i];
+			LOG4CXX_DEBUG(logger, "string: " << s);
+			printStr(s);
+			move(0, s.size());
+		}
+		clearEol();
+	}
+//	pop();
+	pos(r, c);
+}
+
+
