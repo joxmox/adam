@@ -191,6 +191,26 @@ void Buffer::deleteChar() {
 //	}
 }
 
+void Buffer::gotoSol() {
+	if (col != 0) {
+		col = 0;
+		scr->setCol(0);
+	} else {
+		printMessage("You are already at the start of a line.");
+	}
+}
+
+void Buffer::gotoEol() {
+	int maxRow = data[row].size();
+	if (col != maxRow) {
+		col = maxRow;
+		scr->setCol(maxRow);
+	} else {
+		printMessage("You are already at the end of a line.");
+	}
+}
+
+
 void Buffer::dump() {
 	LoggerPtr logger{Logger::getLogger("Buffer.dump")};
 	LOG4CXX_DEBUG(logger, "row: " << row);
@@ -207,7 +227,7 @@ void Buffer::setFocus() {
 	scr->refresh();
 }
 
-Win* Buffer::getMainWin() {
+Screen* Buffer::getMainWin() {
 	return scr;
 }
 

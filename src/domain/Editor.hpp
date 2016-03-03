@@ -9,6 +9,7 @@
 #define DOMAIN_EDITOR_HPP_
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include "Buffer.hpp"
@@ -34,12 +35,18 @@ class Editor {
 	string fileName;
 	int key = 0;
 	bool loop = true;
-	string getBufferName(const string& fileName);
+	bool learnFlag = false;
+	vector<vector<int>> learnBuf;
+	map<int, int> learnMap;
 	funcVec disMap;
+	string getBufferName(const string& fileName);
 	void mainLoop();
 	void initDispatch();
 	void setDisp(int key, funcFun f);
 	void setDisp(int key1, int key2, funcFun f);
+	void startLearn();
+	void remember();
+	void doLearned();
 	static void cbIllegalChar(Editor* ed);
 	static void cbNormChar(Editor* ed);
 	static void cbExit(Editor* ed);
@@ -50,6 +57,11 @@ class Editor {
 	static void cbMoveRight(Editor* ed);
 	static void cbReturn(Editor* ed);
 	static void cbBackSpace(Editor* ed);
+	static void cbGotoSol(Editor* ed);
+	static void cbGotoEol(Editor* ed);
+	static void cbStartLearn(Editor* ed);
+	static void cbRemember(Editor* ed);
+	static void cbDoLearned(Editor* ed);
 
 public:
 	Editor(const string& fileName);

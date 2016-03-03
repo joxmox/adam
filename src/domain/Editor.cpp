@@ -80,6 +80,7 @@ void Editor::mainLoop() {
 		LOG4CXX_TRACE(logger, "waiting for key from terminal");
 		buf->getMainWin()->debug();
 		key = buf->getMainWin()->readKey();
+		if (learnFlag) learnBuf.back().push_back(key);
 		LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		disMap[key](this);
 	}
@@ -100,7 +101,11 @@ void Editor::initDispatch() {
 	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
 	disMap = funcVec {1000, cbIllegalChar};
 	setDisp(4, cbDebug);
+	setDisp(5, cbGotoEol);
+	setDisp(8, cbGotoSol);
+	setDisp(12, cbStartLearn); //FIXME: Temporary, should be a do command
 	setDisp(13, cbReturn);
+	setDisp(18, cbRemember);
 	setDisp(26, cbExit);
 	setDisp(32, 126, cbNormChar);
 	setDisp(258, cbMoveDown);
@@ -111,10 +116,48 @@ void Editor::initDispatch() {
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
+void Editor::startLearn() {
+	buf->getMainWin()->printMessage("Press keystrokes to be learned.  Press CTRL/R to remember these keystrokes.");
+	learnBuf.push_back(vector<int> {});
+	learnFlag = true;
+}
 
+void Editor::remember() {
+	LoggerPtr logger{Logger::getLogger("Editor.remember")};
+	if (learnFlag) {
+		buf->getMainWin()->printMessage("Press the key you want to use to do what was just learned: ");
+		int key = buf->getMainWin()->readKey();
+		if (key != 13) {
+			learnBuf.back().pop_back(); // remove last char, which is ctrl-r
+			learnMap[key] = learnBuf.size() - 1;
+			setDisp(key, cbDoLearned);
+			LOG4CXX_DEBUG(logger, "learned, buffer entry: " << learnBuf.size() - 1);
+			buf->getMainWin()->printMessage("Key sequence remembered.");
+		} else {
+			buf->getMainWin()->printMessage("Key sequence not remembered.");
+			LOG4CXX_DEBUG(logger, "learn sequence cancelled");
+		}
+		learnFlag = false;
+	} else {
+		LOG4CXX_DEBUG(logger, "not learning - no action");
+		buf->getMainWin()->printMessage("Nothing to remember.");
+	}
+}
+
+void Editor::doLearned() {
+	LoggerPtr logger{Logger::getLogger("Editor.doLearned")};
+	int bufNum = learnMap[key];
+	LOG4CXX_DEBUG(logger, "key: " << key << ", bufNum:" << bufNum);
+	vector<int> apa = learnBuf[bufNum];
+	for (auto a : apa) {
+		LOG4CXX_DEBUG(logger, "playing back: " << a);
+		key = a;
+		disMap[a](this);
+	}
+}
 
 void Editor::debug() {
-	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
+	LoggerPtr logger{Logger::getLogger("Editor.debug")};
 	LOG4CXX_DEBUG(logger, "dumping buffer:");
 	buf->dump();
 	LOG4CXX_DEBUG(logger, "window info:");
@@ -135,8 +178,11 @@ void Editor::cbMoveLeft(Editor* ed) {ed->getBuffer()->moveLeft();}
 void Editor::cbMoveRight(Editor* ed) {ed->getBuffer()->moveRight();}
 void Editor::cbReturn(Editor* ed) {ed->getBuffer()->insertBreak();}
 void Editor::cbBackSpace(Editor* ed) {ed->getBuffer()->deleteChar();}
-
-
+void Editor::cbGotoSol(Editor* ed) {ed->getBuffer()->gotoSol();}
+void Editor::cbGotoEol(Editor* ed) {ed->getBuffer()->gotoEol();}
+void Editor::cbStartLearn(Editor* ed) {ed->startLearn();}
+void Editor::cbRemember(Editor* ed) {ed->remember();}
+void Editor::cbDoLearned(Editor* ed) {ed->doLearned();}
 
 
 
