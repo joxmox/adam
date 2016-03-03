@@ -16,9 +16,10 @@
 using namespace std;
 using namespace log4cxx;
 
+LoggerPtr Curse::logger{Logger::getLogger("Curse")};
+LoggerPtr Win::logger{Logger::getLogger("Win")};
 
 Curse::Curse() {
-	LoggerPtr logger{Logger::getLogger("Curse")};
 	LOG4CXX_DEBUG(logger, "initializing ncurses");
 	initscr();
 	getmaxyx(stdscr, height, width);
@@ -32,18 +33,18 @@ Curse::Curse() {
 }
 
 Curse::~Curse() {
-	LoggerPtr logger{Logger::getLogger("~Curse")};
-	LOG4CXX_DEBUG(logger, "deleting all windows other than stdscr");
-	for (auto id = 1; id < winMap.size(); id++) {
-		if (winMap[id]) delWin(id);
-	}
 	LOG4CXX_DEBUG(logger, "shutting down curses");
+	for (auto id = 1; id < winMap.size(); id++) {
+		if (winMap[id]) {
+			LOG4CXX_WARN(logger, "found stray WINDOW " << id << ". deleting, but you should delete this explicitly!");
+			delWin(id);
+		}
+	}
 	endwin();
 }
 
 
 Win* Curse::creWin(int height, int width, int row, int col) {
-	LoggerPtr logger{Logger::getLogger("Curse.creWin")};
 	WINDOW* z = newwin(height, width, row, col);
 	keypad(z, true);
 	LOG4CXX_DEBUG(logger, "created window " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
@@ -54,24 +55,22 @@ Win* Curse::creWin(int height, int width, int row, int col) {
 }
 
 int Curse::addWin(int height, int width, int row, int col) {
-	LoggerPtr logger{Logger::getLogger("Curse.addWin")};
 	WINDOW* z = newwin(height, width, row, col);
 	keypad(z, true);
-	LOG4CXX_DEBUG(logger, "created window " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
+	LOG4CXX_DEBUG(logger, "created WINDOW " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
 	LOG4CXX_DEBUG(logger, "WINDOW* = " << reinterpret_cast<long>(z));
 	winMap.push_back(static_cast<void*>(z));
-	LOG4CXX_DEBUG(logger, "adding window with id = " << winMap.size() - 1);
+	LOG4CXX_DEBUG(logger, "adding WINDOW with id = " << winMap.size() - 1 << "to winMap");
 	return winMap.size() - 1;
 }
 
 void Curse::delWin(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.delWin")};
-	LOG4CXX_DEBUG(logger, "deleting window. id=" << id);
 	if (winMap[id]) {
+		LOG4CXX_DEBUG(logger, "deleting ncurses WINDOW. id=" << id);
 	    delwin(static_cast<WINDOW*>(winMap[id]));
 	    winMap[id] = nullptr;
 	} else {
-		LOG4CXX_WARN(logger, "window is NULL. no action taken");
+		LOG4CXX_WARN(logger, "WINDOW is NULL. no action taken");
 	}
 }
 
@@ -86,26 +85,22 @@ int Curse::getHeight() {
 }
 
 int Curse::readKey(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.readKey")};
 	LOG4CXX_DEBUG(logger, "reading key from window id=" << id);
     return wgetch(static_cast<WINDOW*>(winMap[id]));
 }
 
 void Curse::pos(int id, int row, int col) {
-	LoggerPtr logger{Logger::getLogger("Curse.pos")};
 	LOG4CXX_DEBUG(logger, "moving window id=" << id << " to " << row << "," << col);
 	wmove(static_cast<WINDOW*>(winMap[id]), row, col);
 }
 
 void Curse::insertChar(int id, char c) {
-	LoggerPtr logger{Logger::getLogger("Curse.print")};
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", chr=" << c);
 	int sts = winsch(static_cast<WINDOW*>(winMap[id]), c);
 	LOG4CXX_TRACE(logger, "sts: " << sts);
 }
 
 void Curse::refresh(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.refresh")};
 	if (id == -1) {
 		for (auto i = 0; i < winMap.size(); i++) {
 			WINDOW* w = static_cast<WINDOW*>(winMap[i]);
@@ -119,7 +114,6 @@ void Curse::refresh(int id) {
 }
 
 void Curse::printStr(int id, const string& s) {
-	LoggerPtr logger{Logger::getLogger("Curse.print")};
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", str=" << s);
 	int sts = waddstr(static_cast<WINDOW*>(winMap[id]), s.c_str());
 	LOG4CXX_TRACE(logger, "sts: " << sts);
@@ -127,7 +121,6 @@ void Curse::printStr(int id, const string& s) {
 }
 
 void Curse::setAttr(int id, curseAttrs attr) {
-	LoggerPtr logger{Logger::getLogger("Curse.setAttr")};
 	int a = 0;
 	if (attr & attRev) {
 		LOG4CXX_TRACE(logger, "setting REVERSE attribute");
@@ -140,7 +133,6 @@ void Curse::setAttr(int id, curseAttrs attr) {
 }
 
 void Curse::clearAttr(int id, curseAttrs attr) {
-	LoggerPtr logger{Logger::getLogger("Curse.clearAttr")};
 	int a = 0;
 	if (attr & attRev) {
 		LOG4CXX_TRACE(logger, "clearing REVERSE attribute");
@@ -154,27 +146,23 @@ void Curse::clearAttr(int id, curseAttrs attr) {
 }
 
 void Curse::clearEol(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.clearEol")};
 	int sts = wclrtoeol(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_DEBUG(logger, "id = " << id << ", status = " << sts);
 }
 
 void Curse::insertLine(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.insertLine")};
 	LOG4CXX_TRACE(logger, "enter");
 	winsertln(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Curse::delChar(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.delChar")};
 	LOG4CXX_TRACE(logger, "enter");
 	wdelch(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Curse::delLine(int id) {
-	LoggerPtr logger{Logger::getLogger("Curse.delLine")};
 	LOG4CXX_TRACE(logger, "enter");
 	wdeleteln(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
@@ -189,6 +177,7 @@ Win::Win(Curse* curse, int height, int width, int row, int col): height(height),
 
 
 Win::~Win() {
+	LOG4CXX_DEBUG(logger, "deleting instance. id=" << id);
 	curse->delWin(id);
 }
 
@@ -303,9 +292,8 @@ void Win::delLine() {
 }
 
 void Win::debug() {
-	LoggerPtr logger{Logger::getLogger("Curse.debug")};
-	LOG4CXX_DEBUG(logger, "  window id: " << id);
-	LOG4CXX_DEBUG(logger, "  window position: " << row << "," << col);
+	LOG4CXX_DEBUG(logger, "window id: " << id);
+	LOG4CXX_DEBUG(logger, "window position: " << row << "," << col);
 }
 
 

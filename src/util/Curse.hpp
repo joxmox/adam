@@ -1,17 +1,29 @@
 #pragma once
 
 #include <vector>
+#include <string>
+
+#include "log4cxx/logger.h"
+
 
 using namespace std;
 
 class Win;
-enum curseAttrs {attRev = 1, attBold = 2};
+enum curseAttrs {attRev = 1, attBold = 2}; //TODO: this should go into class I guess...
 
-
+/**
+ * Curse is wrapper intended to hide the (to C++) ugly ncurses API. An application program should
+ * create one instance of the Curse class. Calling the member function creWin() will return a Win object that
+ * corresponds to a ncurses window. It is possible to use the Curse class without any sub windows, aka stdscr,
+ * by calling getStdscr(), but mixing the two approaches is not encouraged.
+ * In either case, no functions, other than one of the two mentioned, should be used explicitly
+ * from the application program, but rather called implicitly by the corresponding Win function.
+ */
 class Curse {
 	int height;
 	int width;
 	vector<void*> winMap;
+	static log4cxx::LoggerPtr logger;
 public:
 	Curse();
 	~Curse();
@@ -63,6 +75,7 @@ protected:
 	int col;
 	int id;
 	Curse* curse;
+	static log4cxx::LoggerPtr logger;
 public:
 	Win(Curse* cur, int height, int width, int row, int col);
 	Win(int height, int width, int row, int col, int id, Curse* curse);

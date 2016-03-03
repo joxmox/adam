@@ -18,12 +18,17 @@
 using namespace std;
 using namespace log4cxx;
 
+LoggerPtr Buffer::logger{Logger::getLogger("Buffer")};
+
 Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr): fileName(fileName), bufName(bufName), scr(scr) {
-	LoggerPtr logger{Logger::getLogger("Buffer")};
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
 	maxLine = -1;
 	topLine = 0;
-	curLine = 0;
+}
+
+Buffer::~Buffer() {
+	LOG4CXX_DEBUG(logger, "destroying buffer");
+	delete scr;
 }
 
 void Buffer::updateStatus() {
@@ -35,7 +40,6 @@ void Buffer::printMessage(const string& str) {
 }
 
 int Buffer::readFile(const string& fileName) {
-	LoggerPtr logger{Logger::getLogger("Buffer.readFile")};
 	string readFile = fileName;
 	if (readFile.empty()) readFile = this->fileName;
 	LOG4CXX_DEBUG(logger, "loading file " << readFile << " into buffer");
@@ -45,17 +49,17 @@ int Buffer::readFile(const string& fileName) {
 		string line;
 		while (getline(inf, line)) {
 			data.push_back(line);
-			scr->printStr(line);
-			scr->moveDown();
+//			scr->printStr(line);
+//			scr->moveDown();
 			maxLine++;
 			col = 0;
-			row++;
 		}
 		printMessage(to_string(maxLine) + " lines read from file " + this->fileName);
 	} else {
 		printMessage("Editing new file.  Could not find: " + this->fileName);
 		data.push_back(string {});
 	}
+	scr->repaint(data, topLine);
 	updateStatus();
 	return maxLine;
 }
@@ -65,12 +69,21 @@ bool Buffer::fileExists() {
 	return bool(inf);
 }
 
+bool Buffer::atTopRow() {
+	if (row < 0) throw logic_error("invalid buffer row detected: " +to_string(row));
+	return row == 0;
+}
+
+bool Buffer::atBotRow() {
+	if (row > data.size()) throw logic_error("invalid buffer row detected: " + to_string(row) + " - " + to_string(data.size()));
+	return row == data.size();
+}
+
 int Buffer::getLines() {
 	return maxLine;
 }
 
 void Buffer::adjustBuffer() {
-	LoggerPtr logger{Logger::getLogger("Buffer.adjustBuffer")};
 	if (row > data.size()) {
 		LOG4CXX_ERROR(logger, "cursor way too far down - should not happen");
 		throw logic_error("error");
@@ -82,7 +95,6 @@ void Buffer::adjustBuffer() {
 }
 
 void Buffer::insertChar(int key) {
-	LoggerPtr logger{Logger::getLogger("Buffer.insertChar")};
 	LOG4CXX_DEBUG(logger, "inserting char: " << key);
 	adjustBuffer();
 	scr->insertChar(key);
@@ -91,22 +103,25 @@ void Buffer::insertChar(int key) {
 }
 
 void Buffer::moveUp() {
-	LoggerPtr logger{Logger::getLogger("Buffer.moveUp")};
 	LOG4CXX_TRACE(logger, "enter");
-	if (row > 0) {
+	if (!atTopRow()) {
+		LOG4CXX_DEBUG(logger, "buffer not at top - moving");
 		scr->moveUp(data[--row]);
 	}
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Buffer::moveDown() {
-	LoggerPtr logger{Logger::getLogger("Buffer.moveDown")};
 	LOG4CXX_TRACE(logger, "enter");
-	if (row < data.size()) {
+	if (!atBotRow()) {
+		LOG4CXX_DEBUG(logger, "buffer not at bottom - ok to move");
 		row++;
 		if (!scr->atBottom()) {
+			LOG4CXX_DEBUG(logger, "screen not at bottom - ok to move");
 			scr->moveDown();
 		} else {
+			LOG4CXX_DEBUG(logger, "screen at bottom - need to scroll");
+			topLine++;
 			scr->push(0, 0);
 			scr->delLine();
 			scr->pos(scr->maxRow(), 0);
@@ -118,7 +133,6 @@ void Buffer::moveDown() {
 }
 
 void Buffer::moveLeft() {
-	LoggerPtr logger{Logger::getLogger("Buffer.moveLeft")};
 	LOG4CXX_TRACE(logger, "enter");
 	if (col > 0) {
 		col--;
@@ -130,7 +144,6 @@ void Buffer::moveLeft() {
 }
 
 void Buffer::moveRight() {
-	LoggerPtr logger{Logger::getLogger("Buffer.moveRight")};
 	LOG4CXX_TRACE(logger, "enter");
 	col++;
 	int w = scr->getWidth();
@@ -155,7 +168,6 @@ void Buffer::insertBreak() {
 
 
 void Buffer::deleteChar() {
-	LoggerPtr logger{Logger::getLogger("Buffer.deleteChar")};
 	LOG4CXX_TRACE(logger, "enter");
 	adjustBuffer();
 	if (col > 0) {
@@ -223,7 +235,6 @@ void Buffer::gotoEol() {
 }
 
 void Buffer::pageUp() {
-	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
 	int topRow = row - scr->getRow();
 	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
 	int offset = -scr->getHeight() + 2;
@@ -236,7 +247,6 @@ void Buffer::pageUp() {
 }
 
 void Buffer::pageDown() {
-	static LoggerPtr logger{Logger::getLogger("Buffer.pageDown")};
 	int topRow = row - scr->getRow();
 	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
 	int offset = scr->getHeight() - 2;
@@ -249,7 +259,6 @@ void Buffer::pageDown() {
 }
 
 void Buffer::dump() {
-	LoggerPtr logger{Logger::getLogger("Buffer.dump")};
 	LOG4CXX_DEBUG(logger, "row: " << row);
 	LOG4CXX_DEBUG(logger, "col: " << col);
 	int c {0};
@@ -259,7 +268,6 @@ void Buffer::dump() {
 }
 
 void Buffer::setFocus() {
-	LoggerPtr logger{Logger::getLogger("Buffer.focus")};
 	LOG4CXX_DEBUG(logger, "giving focus to screen main window, id=" << scr->getId());
 	scr->refresh();
 }

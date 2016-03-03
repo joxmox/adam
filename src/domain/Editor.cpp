@@ -20,6 +20,8 @@
 
 using namespace std;
 
+LoggerPtr Editor::logger{Logger::getLogger("Editor")};
+
 Editor::Editor(const string& fileName) {
 	this->fileName = fileName;
 	LoggerPtr logger{Logger::getLogger("Editor")};
@@ -27,10 +29,11 @@ Editor::Editor(const string& fileName) {
 }
 
 Editor::~Editor() {
-	LoggerPtr logger{Logger::getLogger("~Editor")};
 	LOG4CXX_DEBUG(logger, "shutting down");
+	delete buf;
+	delete cmdWin;
+	delete messWin;
 	if (tty != nullptr) delete tty;
-	LOG4CXX_DEBUG(logger, "tty deleted");
 }
 
 int Editor::getKey() {
@@ -46,7 +49,6 @@ void Editor::quit() {
 }
 
 void Editor::edit() {
-	LoggerPtr logger{Logger::getLogger("Editor.edit")};
 	LOG4CXX_DEBUG(logger, "starting");
 
 	initDispatch();
@@ -74,7 +76,6 @@ string Editor::getBufferName(const string& fileName) {
 }
 
 void Editor::mainLoop() {
-	LoggerPtr logger{Logger::getLogger("Editor.mainLoop")};
 	while (loop) {
 		buf->setFocus();
 		LOG4CXX_TRACE(logger, "waiting for key from terminal");
@@ -98,7 +99,6 @@ void Editor::setDisp(int key1, int key2, funcFun f) {
 
 
 void Editor::initDispatch() {
-	LoggerPtr logger{Logger::getLogger("Editor.initDispatch")};
 	disMap = funcVec {1000, cbIllegalChar};
 	setDisp(4, cbDebug);
 	setDisp(5, cbGotoEol);
@@ -125,7 +125,6 @@ void Editor::startLearn() {
 }
 
 void Editor::remember() {
-	LoggerPtr logger{Logger::getLogger("Editor.remember")};
 	if (learnFlag) {
 		buf->getMainWin()->printMessage("Press the key you want to use to do what was just learned: ");
 		int key = buf->getMainWin()->readKey();
@@ -147,7 +146,6 @@ void Editor::remember() {
 }
 
 void Editor::doLearned() {
-	LoggerPtr logger{Logger::getLogger("Editor.doLearned")};
 	int bufNum = learnMap[key];
 	LOG4CXX_DEBUG(logger, "key: " << key << ", bufNum:" << bufNum);
 	vector<int> apa = learnBuf[bufNum];
@@ -159,7 +157,6 @@ void Editor::doLearned() {
 }
 
 void Editor::debug() {
-	LoggerPtr logger{Logger::getLogger("Editor.debug")};
 	LOG4CXX_DEBUG(logger, "dumping buffer:");
 	buf->dump();
 	LOG4CXX_DEBUG(logger, "window info:");
@@ -167,7 +164,6 @@ void Editor::debug() {
 }
 
 void Editor::cbIllegalChar(Editor* ed) {
-	LoggerPtr logger{Logger::getLogger("Editor.cbIllegal")};
 	LOG4CXX_DEBUG(logger, "received unexpected character: " << ed->getKey());
 }
 

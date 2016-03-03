@@ -16,9 +16,7 @@
 using namespace std;
 using namespace log4cxx;
 
-
-LoggerPtr logger{Logger::getLogger("main")};
-
+LoggerPtr logger{Logger::getLogger("adam")};
 
 int main(int argc, char* argv[]) {
     PropertyConfigurator::configure("conf/log4cxx.conf");
@@ -49,8 +47,9 @@ int main(int argc, char* argv[]) {
     LOG4CXX_DEBUG(logger, "command line ok. filename is " << fileName);
 
     Editor ed {fileName};
+    LOG4CXX_DEBUG(logger, "editor instance created - starting editing");
     ed.edit();
-
+    LOG4CXX_DEBUG(logger, "editor session ended");
 }
 
 

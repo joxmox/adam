@@ -12,6 +12,9 @@
 #include <vector>
 #include <map>
 
+#include "log4cxx/logger.h"
+
+
 #include "Buffer.hpp"
 #include "Curse.hpp"
 
@@ -39,6 +42,7 @@ class Editor {
 	vector<vector<int>> learnBuf;
 	map<int, int> learnMap;
 	funcVec disMap;
+	static log4cxx::LoggerPtr logger;
 	string getBufferName(const string& fileName);
 	void mainLoop();
 	void initDispatch();
