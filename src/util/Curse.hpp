@@ -87,8 +87,10 @@ public:
 	int getWidth();
 	void pos(int row, int col);
 	void move(int rows, int cols);
-	void moveUp(const string& str = "");
-	void moveDown(const string& str = "");
+	void moveUp(int r = 1);
+	void moveDown(int r = 1);
+	void moveRight(int c = 1);
+	void moveLeft(int c = 1);
 	void moveLeft(const string& str);
 	void moveRight(const string& str);
 	int getCol();

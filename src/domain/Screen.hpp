@@ -38,7 +38,15 @@ public:
 	void insertChar(char c);
 	void insertLine(const string& line = "");
 	void printBelow(const string& line);
-
+	void delLine();
+	void delLine(const string& s);
+	void delLine(int r, const string& s = "");
+	void delChar();
+	void moveUp(int r = 1);
+	void moveUp(const string& s);
+	void moveDown(const string& s);
+	void insertBreak(const string& s);
+	void deleteBreak(const string& botRow, const string& delStr, const string& orgStr);
 	void repaint(const vector<string>& data, int topRow);
 };
 

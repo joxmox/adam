@@ -8,7 +8,6 @@
 #include <string>
 
 #include "log4cxx/logger.h"
-#include "log4cxx/propertyconfigurator.h"
 
 #include "Screen.hpp"
 #include "Curse.hpp"
@@ -24,7 +23,7 @@ Screen::Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin, W
 }
 
 Screen::~Screen() {
-	LOG4CXX_DEBUG(logger, "destrouing screen");
+	LOG4CXX_DEBUG(logger, "destroying screen");
 	delete stsWin;
 }
 
@@ -126,8 +125,94 @@ void Screen::printBelow(const string& line) {
 }
 
 void Screen::insertChar(char c) {
-		Win::insertChar(c);
-		move(0, 1);
+	Win::insertChar(c);
+	move(0, 1);
 }
 
+
+void Screen::moveUp(const string& s) {
+	if (row == 0) {
+		push(0, 0);
+		insertLine();
+		printStr(s);
+		pop();
+	} else {
+		Win::moveUp();
+	}
+}
+
+void Screen::moveDown(const string& s) {
+	if (atBottom()) {
+		push(0, 0);
+		delLine();
+		pop();
+		push(row, 0);
+		printStr(s);
+		pop();
+	} else {
+		Win::moveDown();
+	}
+}
+void Screen::delLine() {
+	Win::delLine();
+}
+
+void Screen::delLine(const string& s) {
+	Win::delLine();
+	push(height - 1, 0);
+	printStr(s);
+	pop();
+}
+
+void Screen::delLine(int r, const string& s) {
+	push();
+	pos(r, 0);
+	Win::delLine();
+	if (!s.empty()) {
+		pos(height - 1, 0);
+		printStr(s);
+	}
+	pop();
+}
+
+void Screen::insertBreak(const string& s) {
+	LOG4CXX_TRACE(logger, "enter");
+	LOG4CXX_DEBUG(logger, "clearing to eol");
+	clearEol();
+	if (atBottom()) {
+		LOG4CXX_DEBUG(logger, "at bottom");
+		LOG4CXX_DEBUG(logger, "deleting line 0, supplying string:" << s);
+		delLine(0, s);
+		LOG4CXX_DEBUG(logger, "setting col=0");
+		setCol(0);
+	} else {
+		LOG4CXX_DEBUG(logger, "not at bottom");
+		LOG4CXX_DEBUG(logger, "increasing row and setting col=0");
+		pos(++row, 0);
+		LOG4CXX_DEBUG(logger, "insert string: " << s);
+		insertLine(s);
+	}
+	LOG4CXX_TRACE(logger, "exit");
+
+}
+
+void Screen::delChar() {
+	moveLeft();
+	Win::delChar();
+}
+
+void Screen::moveUp(int r) {
+	Win::moveUp(r);
+}
+
+void Screen::deleteBreak(const string& botRow, const string& delStr, const string& orgStr) {
+	delLine(botRow);
+	if (row > 0) {
+		moveUp(1);
+	} else {
+		moveUp(orgStr);
+	}
+	setCol(orgStr.size());
+	printStr(delStr);
+}
 

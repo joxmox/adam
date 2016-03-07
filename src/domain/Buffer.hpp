@@ -19,7 +19,9 @@
 using namespace std;
 
 class Buffer {
-	const string eobStr = "[End of buffer]";
+public:
+	const string eobStr = "[End of file]";
+private:
 	int topLine = 0;
 	int maxLine = 0;
 	int row = 0;
@@ -30,9 +32,11 @@ class Buffer {
 	string stsDirection = "Forward";
 	string fileName;
 	string bufName;
-	vector<string> data = {{"[End of Buffer]"}};
+	vector<string> data = {{eobStr}};
 	bool selectActive = false;
 	Screen* scr;
+	vector<string> pasteBuf;
+	bool firstKill = true;
 	static log4cxx::LoggerPtr logger;
 //	Win* mainWin = nullptr;
 //	Win* stsWin = nullptr;
@@ -40,7 +44,7 @@ class Buffer {
 //	Win* cmdWin = nullptr;
 	void updateStatus();
 	void printMessage(const string& str);
-	void adjustBuffer();
+	void adjustBuffer(int type);
 
 public:
 	Buffer(const string& bufName, const string& fileName = "", Screen* scr = nullptr);
@@ -67,5 +71,9 @@ public:
 	void push();
 	void push(int r, int c);
 	void pop();
+	void killLine();
+	void paste();
+	void insertLine(const string& s);
+	void saveToFile(const string& fileName);
 };
 

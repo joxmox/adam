@@ -11,7 +11,6 @@
 #include <functional>
 
 #include "log4cxx/logger.h"
-#include "log4cxx/propertyconfigurator.h"
 
 #include "Buffer.hpp"
 #include "Curse.hpp"
@@ -44,11 +43,16 @@ Buffer* Editor::getBuffer() {
 	return buf;
 }
 
+void Editor::exit() {
+	loop = false;
+	buf->saveToFile(fileName);
+}
+
 void Editor::quit() {
 	loop = false;
 }
 
-void Editor::edit(const string& input, const string& record) {
+void Editor::edit(const vector<int>& input, const string& record) {
 	LOG4CXX_DEBUG(logger, "starting");
 
 	initDispatch();
@@ -70,13 +74,7 @@ void Editor::edit(const string& input, const string& record) {
 	}
 
 	if (!input.empty()) {
-		ifstream ifs {input};
-		if (!ifs) throw runtime_error("could not open " + input + " for input");
-		string line;
-		while (getline(ifs, line)) {
-			inKeys.push(stoi(line));
-		}
-		LOG4CXX_DEBUG(logger, "reading simulated keystrokes from file " << input);
+		inKeys = input;
 	}
 
 	if (!record.empty()) {
@@ -96,7 +94,7 @@ void Editor::mainLoop() {
 		buf->setFocus();
 		if (!inKeys.empty()) {
 			key = inKeys.front();
-			inKeys.pop();
+			inKeys.erase(inKeys.begin());
 			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");
 			if (inKeys.empty()) LOG4CXX_DEBUG(logger, "input file processed  reverting to keyboard");
 		} else  {
@@ -127,9 +125,12 @@ void Editor::initDispatch() {
 	setDisp(4, cbDebug);
 	setDisp(5, cbGotoEol);
 	setDisp(8, cbGotoSol);
-	setDisp(12, cbStartLearn); //FIXME: Temporary, should be a do command
+	setDisp(11, cbKillLine);
+	setDisp(12, cbStartLearn); //FIXME: Temporary, should (also?) be a do command
 	setDisp(13, cbReturn);
+	setDisp(16, cbPaste);
 	setDisp(18, cbRemember);
+	setDisp(24, cbQuit);
 	setDisp(26, cbExit);
 	setDisp(32, 126, cbNormChar);
 	setDisp(258, cbMoveDown);
@@ -151,7 +152,14 @@ void Editor::startLearn() {
 void Editor::remember() {
 	if (learnFlag) {
 		buf->getMainWin()->printMessage("Press the key you want to use to do what was just learned: ");
-		int key = buf->getMainWin()->readKey();
+		int key;
+		if (inKeys.empty()) {
+			key = buf->getMainWin()->readKey();
+		} else {
+			key = inKeys.front();
+			inKeys.erase(inKeys.begin());
+		}
+		if (recFlag) recFile << key << endl;
 		if (key != 13) {
 			learnBuf.back().pop_back(); // remove last char, which is ctrl-r
 			learnMap[key] = learnBuf.size() - 1;
@@ -192,7 +200,8 @@ void Editor::cbIllegalChar(Editor* ed) {
 }
 
 void Editor::cbNormChar(Editor* ed) {ed->getBuffer()->insertChar(ed->getKey());}
-void Editor::cbExit(Editor* ed) {ed->quit();}
+void Editor::cbExit(Editor* ed) {ed->exit();}
+void Editor::cbQuit(Editor* ed) {ed->quit();}
 void Editor::cbDebug(Editor* ed) {ed->debug();}
 void Editor::cbMoveUp(Editor* ed) {ed->getBuffer()->moveUp();}
 void Editor::cbMoveDown(Editor* ed) {ed->getBuffer()->moveDown();}
@@ -207,6 +216,8 @@ void Editor::cbRemember(Editor* ed) {ed->remember();}
 void Editor::cbDoLearned(Editor* ed) {ed->doLearned();}
 void Editor::cbPageUp(Editor* ed) {ed->getBuffer()->pageUp();}
 void Editor::cbPageDown(Editor* ed) {ed->getBuffer()->pageDown();}
+void Editor::cbKillLine(Editor* ed) {ed->getBuffer()->killLine();}
+void Editor::cbPaste(Editor* ed) {ed->getBuffer()->paste();}
 
 
 

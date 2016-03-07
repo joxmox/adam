@@ -25,11 +25,13 @@ int main(int argc, char* argv[]) {
 
 	string fileName;
 	string input;
+	vector<int>inKeys;
 	string record;
 
 	if (argc > 1) {
 		fileName = argv[1];
 	}
+
 	for (int k = 2; k < argc; ++k) {
 		string arg = argv[k];
 		if (arg == "--input") {
@@ -50,11 +52,20 @@ int main(int argc, char* argv[]) {
     	return 1;
     }
 
+    if (!input.empty()) {
+    	ifstream ifs {input};
+    	if (!ifs) throw runtime_error("could not open " + input + " for input");
+    	string line;
+    	while (getline(ifs, line)) {
+    		inKeys.push_back(stoi(line));
+    	}
+    }
+
     LOG4CXX_DEBUG(logger, "command line ok. filename is " << fileName);
 
     Editor ed {fileName};
     LOG4CXX_DEBUG(logger, "editor instance created - starting editing");
-    ed.edit(input, record);
+    ed.edit(inKeys, record);
     LOG4CXX_DEBUG(logger, "editor session ended");
 }
 

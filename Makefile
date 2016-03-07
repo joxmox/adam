@@ -26,7 +26,7 @@ run 	= $<
 # dirs
 src = src/
 app = $(src)app/
-cfg = $(src)conf/
+cfg = conf/
 dom = $(src)domain/
 tst = $(src)test/
 utl = $(src)util/
@@ -159,7 +159,7 @@ $(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp
 test_compile : lib $(bin)unitTest
 
 test_run : 
-	-$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml
+	gnome-terminal -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml\""
 
 test_report :
 	@if [ -e $(docTst)gtest-results.xml ] && `which groovy > /dev/null`; then \
@@ -170,16 +170,20 @@ test_report :
 
 test_show : 
 	@if [ -e $(docTst)index.html ]; then \
-		$(web) $(doc)test/index.html; \
+		$(web) $(doc)test/index.html &  \
 	fi
 
 
-$(bin)unitTest : $(tstObjs) $(objLib)stringUtils.o
+$(bin)unitTest : $(tstObjs) $(objLib)stringUtils.o $(objLib)Curse.o $(objLib)Screen.o $(objLib)Buffer.o $(objLib)Editor.o
 	$(link) $(tst_libs)
 
 	
 $(objTst)stringUtilsTest.o : $(tst)stringUtilsTest.cpp  $(utl)stringUtils.hpp $(utl)stringUtils.cpp
 	$(compile) $(tst_incl)
+
+$(objTst)adamTest.o : $(tst)adamTest.cpp  
+	$(compile) $(tst_incl)
+
 
 
 

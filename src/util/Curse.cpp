@@ -8,7 +8,6 @@
 
 #include <ncurses.h>
 #include "log4cxx/logger.h"
-#include "log4cxx/propertyconfigurator.h"
 
 #include "Curse.hpp"
 
@@ -203,27 +202,20 @@ void Win::move(int rows, int cols) {
 	pos(row + rows, col + cols);
 }
 
-void Win::moveUp(const string& str) {
-	if (row == 0) {
-		curse->pos(id, 0, 0);
-		insertLine();
-		printStr(str);
-	} else {
-		row--;
-	}
-	pos(row, col);
+void Win::moveUp(int r) {
+	pos(row - r, col);
 }
 
-void Win::moveDown(const string& str) {
-	if (row + 1 == height) {
-		curse->pos(id, 0, 0);
-		delLine();
-		curse->pos(id, height - 1, 0);
-		printStr(str);
-	} else {
-		row++;
-	}
-	pos(row, col);
+void Win::moveDown(int r) {
+	pos(row + r, col);
+}
+
+void Win::moveLeft(int c) {
+	pos(row, col - c);
+}
+
+void Win::moveRight(int c) {
+	pos(row, col + c);
 }
 
 void Win::moveLeft(const string& str) {

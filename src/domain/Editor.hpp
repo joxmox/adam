@@ -43,7 +43,7 @@ class Editor {
 	bool learnFlag = false;
 	vector<vector<int>> learnBuf;
 	map<int, int> learnMap;
-	queue<int> inKeys;
+	vector<int> inKeys;
 	bool recFlag = false;
 	ofstream recFile;
 	funcVec disMap;
@@ -59,6 +59,7 @@ class Editor {
 	static void cbIllegalChar(Editor* ed);
 	static void cbNormChar(Editor* ed);
 	static void cbExit(Editor* ed);
+	static void cbQuit(Editor* ed);
 	static void cbDebug(Editor* ed);
 	static void cbMoveUp(Editor* ed);
 	static void cbMoveDown(Editor* ed);
@@ -73,13 +74,16 @@ class Editor {
 	static void cbDoLearned(Editor* ed);
 	static void cbPageUp(Editor* ed);
 	static void cbPageDown(Editor* ed);
+	static void cbKillLine(Editor* ed);
+	static void cbPaste(Editor* ed);
 
 public:
 	Editor(const string& fileName);
 	~Editor();
-	void edit(const string& input, const string& Record);
+	void edit(const vector<int>& input, const string& record);
 	int getKey();
 	Buffer* getBuffer();
+	void exit();
 	void quit();
 	void insertChar();
 	void debug();
