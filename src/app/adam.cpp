@@ -24,20 +24,26 @@ int main(int argc, char* argv[]) {
 	string usage = "usage: " + string(argv[0]) + " <file name> [--debug <debug level>]";
 
 	string fileName;
-	int dbgMask {0}; // just a dummy for time beeing
+	string input;
+	string record;
+
 	if (argc > 1) {
 		fileName = argv[1];
 	}
 	for (int k = 2; k < argc; ++k) {
 		string arg = argv[k];
-		if (arg == "--debug") {
-			dbgMask = stoi(argv[++k]);
+		if (arg == "--input") {
+			LOG4CXX_DEBUG(logger, "option input: " << argv[++k]);
+			input = argv[k];
+		} else if (arg == "--record") {
+			LOG4CXX_DEBUG(logger, "record input: " << argv[++k]);
+			record = argv[k];
 		} else {
 			cerr << argv[0] << "Invalid option -- " << arg << endl << usage << endl;
 			return 1;
 		}
+
 	}
-	dbgMask++; // dummy op;
 
     if (fileName.empty()) {
     	cerr << argv[0] << "No filename specified" << endl << usage << endl;
@@ -48,7 +54,7 @@ int main(int argc, char* argv[]) {
 
     Editor ed {fileName};
     LOG4CXX_DEBUG(logger, "editor instance created - starting editing");
-    ed.edit();
+    ed.edit(input, record);
     LOG4CXX_DEBUG(logger, "editor session ended");
 }
 

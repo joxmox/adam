@@ -35,6 +35,9 @@ public:
 	void pop();
 	bool atBottom();
 	int maxRow();
+	void insertChar(char c);
+	void insertLine(const string& line = "");
+	void printBelow(const string& line);
 
 	void repaint(const vector<string>& data, int topRow);
 };

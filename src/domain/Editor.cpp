@@ -48,7 +48,7 @@ void Editor::quit() {
 	loop = false;
 }
 
-void Editor::edit() {
+void Editor::edit(const string& input, const string& record) {
 	LOG4CXX_DEBUG(logger, "starting");
 
 	initDispatch();
@@ -68,6 +68,22 @@ void Editor::edit() {
 	} else {
 		LOG4CXX_DEBUG(logger, "editing new file");
 	}
+
+	if (!input.empty()) {
+		ifstream ifs {input};
+		if (!ifs) throw runtime_error("could not open " + input + " for input");
+		string line;
+		while (getline(ifs, line)) {
+			inKeys.push(stoi(line));
+		}
+		LOG4CXX_DEBUG(logger, "reading simulated keystrokes from file " << input);
+	}
+
+	if (!record.empty()) {
+		recFile.open(record);
+		if (!recFile) throw runtime_error("could not open " + record + " for output");
+		recFlag = true;
+	}
 	mainLoop();
 }
 
@@ -78,11 +94,19 @@ string Editor::getBufferName(const string& fileName) {
 void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
-		LOG4CXX_TRACE(logger, "waiting for key from terminal");
-		buf->getMainWin()->debug();
-		key = buf->getMainWin()->readKey();
+		if (!inKeys.empty()) {
+			key = inKeys.front();
+			inKeys.pop();
+			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");
+			if (inKeys.empty()) LOG4CXX_DEBUG(logger, "input file processed  reverting to keyboard");
+		} else  {
+			LOG4CXX_TRACE(logger, "waiting for key from terminal");
+			buf->getMainWin()->debug();
+			key = buf->getMainWin()->readKey();
+			LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
+		}
 		if (learnFlag) learnBuf.back().push_back(key);
-		LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
+		if (recFlag) recFile << key << endl;
 		disMap[key](this);
 	}
 }

@@ -115,9 +115,9 @@ void Curse::refresh(int id) {
 
 void Curse::printStr(int id, const string& s) {
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", str=" << s);
-	int sts = waddstr(static_cast<WINDOW*>(winMap[id]), s.c_str());
+	int sts = winsstr(static_cast<WINDOW*>(winMap[id]), s.c_str());
 	LOG4CXX_TRACE(logger, "sts: " << sts);
-	if (sts != OK) LOG4CXX_ERROR(logger, "unexpected return code from waddstr: " << sts);
+	if (sts != OK) LOG4CXX_ERROR(logger, "unexpected return code from winsstr: " << sts);
 }
 
 void Curse::setAttr(int id, curseAttrs attr) {

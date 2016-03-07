@@ -47,14 +47,14 @@ int Buffer::readFile(const string& fileName) {
 	maxLine = 0;
 	if (inf) {
 		string line;
+		push();
 		while (getline(inf, line)) {
-			data.push_back(line);
-//			scr->printStr(line);
-//			scr->moveDown();
+			data.insert(data.begin() + row++, line);
 			maxLine++;
 			col = 0;
 		}
 		printMessage(to_string(maxLine) + " lines read from file " + this->fileName);
+		pop();
 	} else {
 		printMessage("Editing new file.  Could not find: " + this->fileName);
 		data.push_back(string {});
@@ -75,8 +75,8 @@ bool Buffer::atTopRow() {
 }
 
 bool Buffer::atBotRow() {
-	if (row > data.size()) throw logic_error("invalid buffer row detected: " + to_string(row) + " - " + to_string(data.size()));
-	return row == data.size();
+	if (row >= data.size()) throw logic_error("invalid buffer row detected: " + to_string(row) + " - " + to_string(data.size()));
+	return row == data.size() - 1;
 }
 
 int Buffer::getLines() {
@@ -88,17 +88,26 @@ void Buffer::adjustBuffer() {
 		LOG4CXX_ERROR(logger, "cursor way too far down - should not happen");
 		throw logic_error("error");
 	}
-	if (row == data.size()) {
-		LOG4CXX_DEBUG(logger, "cursor one row down - adding line to buffer");
-		data.push_back(string { });
-	}
+//	if (row == data.size()) {
+//		LOG4CXX_DEBUG(logger, "cursor one row down - adding line to buffer");
+//		data.push_back(string { });
+//	}
 }
 
 void Buffer::insertChar(int key) {
 	LOG4CXX_DEBUG(logger, "inserting char: " << key);
+	if (atBotRow()) {
+		LOG4CXX_DEBUG(logger, "at bottom row - inserting empty line at row " << row);
+		data.insert(data.begin() + row, string(col, ' '));
+		scr->insertLine();
+		LOG4CXX_DEBUG(logger, "row:" << row);
+	}
+	if (col > data[row].size()) {
+		LOG4CXX_DEBUG(logger, "cursor right of data - padding with spaces");
+		data[row].append(string(col - data[row].size(), ' '));
+	}
 	adjustBuffer();
 	scr->insertChar(key);
-	scr->move(0, 1);
 	data[row].insert(col++, string(1, key));
 }
 
@@ -125,9 +134,13 @@ void Buffer::moveDown() {
 			scr->push(0, 0);
 			scr->delLine();
 			scr->pos(scr->maxRow(), 0);
-			scr->printStr(data[row]);
+			LOG4CXX_TRACE(logger, "Hej1");
+			if (!atBotRow()) scr->printStr(data[row]);
+			LOG4CXX_TRACE(logger, "Hej2");
 			scr->pop();
 		}
+	} else {
+		LOG4CXX_DEBUG(logger, "buffer already at bootom row");
 	}
 	LOG4CXX_TRACE(logger, "exit");
 }
@@ -276,5 +289,24 @@ Screen* Buffer::getMainWin() {
 	return scr;
 }
 
+void Buffer::push() {
+	posStack.push_back({row, col});
+	LOG4CXX_DEBUG(logger, "saved position " << row << "," << col);
+}
 
+void Buffer::push(int r, int c) {
+	push();
+	LOG4CXX_DEBUG(logger, "...and moving to " << r << "," << c);
+	row = r;
+	col = c;
+}
+
+void Buffer::pop() {
+	if (posStack.empty()) throw logic_error("position stack is empty - cannot pop");
+	pair<int, int> res {posStack.back()};
+	posStack.pop_back();
+	row = res.first;
+	col = res.second;
+	LOG4CXX_DEBUG(logger, "restored position " << row << "," << col);
+}
 

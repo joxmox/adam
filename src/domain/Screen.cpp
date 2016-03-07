@@ -105,4 +105,29 @@ void Screen::repaint(const vector<string>& data, int topRow) {
 	pop();
 }
 
+/**
+ * Save position. Move to start of row. Insert new line. Restore position.
+ */
+void Screen::insertLine(const string& line) {
+	push();
+	LOG4CXX_DEBUG(logger, "moving to col=0 and inserting blank line");
+	setCol(0);
+	Win::insertLine();
+	LOG4CXX_DEBUG(logger, "printing supplied string (if any)");
+	if (!line.empty()) printStr(line);
+	pop();
+}
+
+void Screen::printBelow(const string& line) {
+	push();
+	pos(row + 1, 0);
+	printStr(line);
+	pop();
+}
+
+void Screen::insertChar(char c) {
+		Win::insertChar(c);
+		move(0, 1);
+}
+
 

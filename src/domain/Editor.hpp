@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <fstream>
+#include <queue>
 
 #include "log4cxx/logger.h"
 
@@ -41,6 +43,9 @@ class Editor {
 	bool learnFlag = false;
 	vector<vector<int>> learnBuf;
 	map<int, int> learnMap;
+	queue<int> inKeys;
+	bool recFlag = false;
+	ofstream recFile;
 	funcVec disMap;
 	static log4cxx::LoggerPtr logger;
 	string getBufferName(const string& fileName);
@@ -72,7 +77,7 @@ class Editor {
 public:
 	Editor(const string& fileName);
 	~Editor();
-	void edit();
+	void edit(const string& input, const string& Record);
 	int getKey();
 	Buffer* getBuffer();
 	void quit();

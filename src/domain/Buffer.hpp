@@ -24,12 +24,13 @@ class Buffer {
 	int maxLine = 0;
 	int row = 0;
 	int col = 0;
+	vector<pair<int, int>> posStack;
 	string stsWrite = "Write";
 	string stsInsert = "Insert";
 	string stsDirection = "Forward";
 	string fileName;
 	string bufName;
-	vector<string> data;
+	vector<string> data = {{"[End of Buffer]"}};
 	bool selectActive = false;
 	Screen* scr;
 	static log4cxx::LoggerPtr logger;
@@ -63,5 +64,8 @@ public:
 	void gotoEol();
 	void pageUp();
 	void pageDown();
+	void push();
+	void push(int r, int c);
+	void pop();
 };
 

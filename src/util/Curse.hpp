@@ -28,6 +28,8 @@ public:
 	Curse();
 	~Curse();
 
+
+
 	/**
 	 * The normal way to construct Win object. In some cases you will create the window
 	 * object yourself, such as in a inherited class. The the subclass should u
