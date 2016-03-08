@@ -5,6 +5,7 @@
 #include <map>
 #include <cstdlib>
 #include <cstring>
+#include <mutex>
 
 #include <ncurses.h>
 #include "log4cxx/logger.h"
@@ -17,9 +18,11 @@ using namespace log4cxx;
 
 LoggerPtr Curse::logger{Logger::getLogger("Curse")};
 LoggerPtr Win::logger{Logger::getLogger("Win")};
+mutex Curse::gMaster;
 
 Curse::Curse() {
 	LOG4CXX_DEBUG(logger, "initializing ncurses");
+	lock_guard<mutex> guard(gMaster);
 	initscr();
 	getmaxyx(stdscr, height, width);
 	LOG4CXX_DEBUG(logger, "terminal geometry: " << height << "*" << width);
@@ -33,6 +36,7 @@ Curse::Curse() {
 
 Curse::~Curse() {
 	LOG4CXX_DEBUG(logger, "shutting down curses");
+	lock_guard<mutex> guard(gMaster);
 	for (auto id = 1; id < winMap.size(); id++) {
 		if (winMap[id]) {
 			LOG4CXX_WARN(logger, "found stray WINDOW " << id << ". deleting, but you should delete this explicitly!");
@@ -44,6 +48,7 @@ Curse::~Curse() {
 
 
 Win* Curse::creWin(int height, int width, int row, int col) {
+	lock_guard<mutex> guard(gMaster);
 	WINDOW* z = newwin(height, width, row, col);
 	keypad(z, true);
 	LOG4CXX_DEBUG(logger, "created window " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
@@ -54,6 +59,7 @@ Win* Curse::creWin(int height, int width, int row, int col) {
 }
 
 int Curse::addWin(int height, int width, int row, int col) {
+	lock_guard<mutex> guard(gMaster);
 	WINDOW* z = newwin(height, width, row, col);
 	keypad(z, true);
 	LOG4CXX_DEBUG(logger, "created WINDOW " << height << "*" << width << " with id = " << winMap.size() << " at " << row << "," << col);
@@ -64,6 +70,7 @@ int Curse::addWin(int height, int width, int row, int col) {
 }
 
 void Curse::delWin(int id) {
+	lock_guard<mutex> guard(gMaster);
 	if (winMap[id]) {
 		LOG4CXX_DEBUG(logger, "deleting ncurses WINDOW. id=" << id);
 	    delwin(static_cast<WINDOW*>(winMap[id]));
@@ -90,16 +97,19 @@ int Curse::readKey(int id) {
 
 void Curse::pos(int id, int row, int col) {
 	LOG4CXX_DEBUG(logger, "moving window id=" << id << " to " << row << "," << col);
+	lock_guard<mutex> guard(gMaster);
 	wmove(static_cast<WINDOW*>(winMap[id]), row, col);
 }
 
 void Curse::insertChar(int id, char c) {
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", chr=" << c);
+	lock_guard<mutex> guard(gMaster);
 	int sts = winsch(static_cast<WINDOW*>(winMap[id]), c);
 	LOG4CXX_TRACE(logger, "sts: " << sts);
 }
 
 void Curse::refresh(int id) {
+	lock_guard<mutex> guard(gMaster);
 	if (id == -1) {
 		for (auto i = 0; i < winMap.size(); i++) {
 			WINDOW* w = static_cast<WINDOW*>(winMap[i]);
@@ -114,12 +124,18 @@ void Curse::refresh(int id) {
 
 void Curse::printStr(int id, const string& s) {
 	LOG4CXX_DEBUG(logger, "printing to window id=" << id << ", str=" << s);
+//	lock_guard<mutex> guard(gMaster);
 	int sts = winsstr(static_cast<WINDOW*>(winMap[id]), s.c_str());
 	LOG4CXX_TRACE(logger, "sts: " << sts);
 	if (sts != OK) LOG4CXX_ERROR(logger, "unexpected return code from winsstr: " << sts);
 }
 
+void Curse::printStr(int id, char s) {
+	printStr(id, string(1, s));
+}
+
 void Curse::setAttr(int id, curseAttrs attr) {
+	lock_guard<mutex> guard(gMaster);
 	int a = 0;
 	if (attr & attRev) {
 		LOG4CXX_TRACE(logger, "setting REVERSE attribute");
@@ -132,6 +148,7 @@ void Curse::setAttr(int id, curseAttrs attr) {
 }
 
 void Curse::clearAttr(int id, curseAttrs attr) {
+	lock_guard<mutex> guard(gMaster);
 	int a = 0;
 	if (attr & attRev) {
 		LOG4CXX_TRACE(logger, "clearing REVERSE attribute");
@@ -145,24 +162,28 @@ void Curse::clearAttr(int id, curseAttrs attr) {
 }
 
 void Curse::clearEol(int id) {
+	lock_guard<mutex> guard(gMaster);
 	int sts = wclrtoeol(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_DEBUG(logger, "id = " << id << ", status = " << sts);
 }
 
 void Curse::insertLine(int id) {
 	LOG4CXX_TRACE(logger, "enter");
+	lock_guard<mutex> guard(gMaster);
 	winsertln(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Curse::delChar(int id) {
 	LOG4CXX_TRACE(logger, "enter");
+	lock_guard<mutex> guard(gMaster);
 	wdelch(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Curse::delLine(int id) {
 	LOG4CXX_TRACE(logger, "enter");
+	lock_guard<mutex> guard(gMaster);
 	wdeleteln(static_cast<WINDOW*>(winMap[id]));
 	LOG4CXX_TRACE(logger, "exit");
 }
@@ -233,6 +254,10 @@ void Win::insertChar(char c) {
 void Win::printStr(const string& s) {
 	curse->printStr(id, s);
 	pos(row, col);
+}
+
+void Win::printStr(char s) {
+	printStr(string(1, s));
 }
 
 void Win::refresh() {

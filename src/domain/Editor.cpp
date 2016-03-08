@@ -60,7 +60,7 @@ void Editor::saveRecord() {
 		} else {
 			int key = *it;
 			txt = func2name[key];
-			int count = 0;
+			int count = 1;
 			while (it + 1 != recBuf.end() && *(it + 1) == key) {
 				count++;
 				it++;
@@ -160,15 +160,15 @@ void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
 		if (!inKeys.empty()) {
-			this_thread::sleep_for(chrono::milliseconds(25));
+			this_thread::sleep_for(chrono::milliseconds(25)); //TODO: Just for cosmetic reasons right now ;)
 			key = inKeys.front();
 			inKeys.erase(inKeys.begin());
 			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");
 			if (inKeys.empty()) LOG4CXX_DEBUG(logger, "input file processed  reverting to keyboard");
 		} else  {
 			LOG4CXX_TRACE(logger, "waiting for key from terminal");
-			buf->getMainWin()->debug();
-			key = buf->getMainWin()->readKey();
+			buf->getScr()->debug();
+			key = buf->getScr()->readKey();
 			LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		}
 		if (learnFlag) learnBuf.back().push_back(key);
@@ -214,20 +214,30 @@ void Editor::initDispatch() {
 }
 
 void Editor::startLearn() {
-	buf->getMainWin()->printMessage("Press keystrokes to be learned.  Press CTRL/R to remember these keystrokes.");
+	buf->getScr()->printMessage("Press keystrokes to be learned.  Press CTRL/R to remember these keystrokes.");
 	learnBuf.push_back(vector<int> {});
 	learnFlag = true;
 }
 
 void Editor::remember() {
 	if (learnFlag) {
-		buf->getMainWin()->printMessage("Press the key you want to use to do what was just learned: ");
-		int key;
-		if (inKeys.empty()) {
-			key = buf->getMainWin()->readKey();
-		} else {
-			key = inKeys.front();
-			inKeys.erase(inKeys.begin());
+		bool ok = false;
+		while (!ok) {
+			buf->getScr()->printCommand("Press the key you want to use to do what was just learned: ");
+			if (inKeys.empty()) {
+				key = buf->getScr()->readKey();
+			} else {
+				key = inKeys.front();
+				inKeys.erase(inKeys.begin());
+			}
+			if (key == 18) {
+				buf->getScr()->printWarning("You cannot define the REMEMBER key for a learn sequence.");
+			} else if (key >= 32 && key <= 126) {
+				buf->getScr()->printWarning("You cannot define a typing key.");
+			} else {
+				buf->getScr()->printCommand("");
+				ok = true;
+			}
 		}
 		if (recFlag) recBuf.push_back(key);
 		if (key != 13) {
@@ -235,15 +245,15 @@ void Editor::remember() {
 			learnMap[key] = learnBuf.size() - 1;
 			setDisp("recall", key, cbDoLearned);
 			LOG4CXX_DEBUG(logger, "learned, buffer entry: " << learnBuf.size() - 1);
-			buf->getMainWin()->printMessage("Key sequence remembered.");
+			buf->getScr()->printMessage("Key sequence remembered.");
 		} else {
-			buf->getMainWin()->printMessage("Key sequence not remembered.");
+			buf->getScr()->printMessage("Key sequence not remembered.");
 			LOG4CXX_DEBUG(logger, "learn sequence cancelled");
 		}
 		learnFlag = false;
 	} else {
 		LOG4CXX_DEBUG(logger, "not learning - no action");
-		buf->getMainWin()->printMessage("Nothing to remember.");
+		buf->getScr()->printMessage("Nothing to remember.");
 	}
 }
 
@@ -262,7 +272,7 @@ void Editor::debug() {
 	LOG4CXX_DEBUG(logger, "dumping buffer:");
 	buf->dump();
 	LOG4CXX_DEBUG(logger, "window info:");
-	buf->getMainWin()->debug();
+	buf->getScr()->debug();
 }
 
 void Editor::cbIllegalChar(Editor* ed) {

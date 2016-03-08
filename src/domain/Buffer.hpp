@@ -57,7 +57,7 @@ public:
 	void insertChar(int key);
 	void dump();
 	void setFocus();
-	Screen* getMainWin();
+	Screen* getScr();
 	void moveUp();
 	void moveDown();
 	void moveLeft();

@@ -6,6 +6,8 @@
  */
 
 #include <string>
+#include <chrono>
+#include <thread>
 
 #include "log4cxx/logger.h"
 
@@ -16,6 +18,8 @@ using namespace std;
 using namespace log4cxx;
 
 LoggerPtr Screen::logger{Logger::getLogger("Screen")};
+
+mutex Screen::gMessage;
 
 Screen::Screen(Curse* cur, int startRow, int numScreens, int pos, Win* cmdWin, Win* messWin) :
 		Win(cur, cur->getHeight() - 3, cur->getWidth(), 0, 0), cur(cur), cmdWin(cmdWin), messWin(messWin) {
@@ -49,12 +53,64 @@ void Screen::setStatus(const string& str1, const string& str2) {
 	stsWin->refresh();
 }
 
+Win* Screen::getMessWin() {
+	return messWin;
+}
+
+Win* Screen::getCmdWin() {
+	return messWin;
+}
+
 void Screen::printMessage(const string& str) {
+	LOG4CXX_DEBUG(logger, "pointer to messWin: " << messWin);
+	LOG4CXX_DEBUG(logger, "starting async printMessage");
+	thread th (asyncMessage, this, str);
+	th.detach();
+}
+
+void Screen::asyncMessage(Screen* scr, const string& str) {
+	LOG4CXX_TRACE(logger, "enter");
+	lock_guard<mutex> guard(gMessage);
+	LOG4CXX_DEBUG(logger, "lock taken");
+	Win* messWin = scr->getMessWin();
+	LOG4CXX_DEBUG(logger, "pointer to messWin: " << messWin);
+	LOG4CXX_DEBUG(logger, "str: " << str);
 	messWin->pos(0, 0);
 	messWin->printStr(str);
 	messWin->pos(0, str.size());
 	messWin->clearEol();
 	messWin->refresh();
+}
+
+void Screen::printWarning(const string& str) {
+	thread th {asyncWarning, this, str};
+	th.detach();
+}
+
+void Screen::asyncWarning(Screen* scr, const string& str) {
+	lock_guard<mutex> guard(gMessage);
+	Win* messWin = scr->getMessWin();
+	messWin->pos(0, 0);
+	messWin->setAttr(attRev);
+	messWin->printStr(str);
+	messWin->pos(0, str.size());
+	messWin->clearEol();
+	messWin->refresh();
+	this_thread::sleep_for(chrono::milliseconds(100));
+	messWin->pos(0, 0);
+	messWin->clearAttr(attRev);
+	messWin->printStr(str);
+	messWin->pos(0, str.size());
+	messWin->clearEol();
+	messWin->refresh();
+}
+
+void Screen::printCommand(const string& str) {
+	cmdWin->pos(0, 0);
+	cmdWin->printStr(str);
+	cmdWin->pos(0, str.size());
+	cmdWin->clearEol();
+	cmdWin->refresh();
 }
 
 
@@ -85,17 +141,16 @@ int Screen::maxRow() {
 	return height - 1;
 }
 
-void Screen::repaint(const vector<string>& data, int topRow) {
-	LOG4CXX_DEBUG(logger, "topRow: " << topRow);
-	LOG4CXX_DEBUG(logger, "data size: " << data.size());
+void Screen::repaint(const vector<string>& data, int bufRow, int newRow) {
+	if (newRow < 0) newRow = getRow();
+	setRow(newRow);
 	push();
-	for (auto i = 0; i < height; i++) {
-		LOG4CXX_DEBUG(logger, i);
-		pos(i, 0);
-		LOG4CXX_DEBUG(logger, "back");
-		if (topRow + i < data.size()) {
-			string s = data[topRow + i];
-			LOG4CXX_DEBUG(logger, "string: " << s);
+	LOG4CXX_DEBUG(logger, "data size: " << data.size());
+	for (auto r = 0; r < height; r++) {
+		pos(r, 0);
+		int i = bufRow - newRow + r;
+		if (i < data.size()) {
+			string s = data[i];
 			printStr(s);
 			move(0, s.size());
 		}

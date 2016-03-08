@@ -245,29 +245,53 @@ void Buffer::gotoEol() {
 }
 
 void Buffer::pageUp() {
+	LOG4CXX_TRACE(logger, "enter");
 	firstKill = true;
-	int topRow = row - scr->getRow();
-	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
-	int offset = -scr->getHeight() + 2;
-	if (row + offset < 0) {
-		offset = -row;
+	int toMove = scr->getHeight() - 2;
+	int screenRow = scr->getRow();
+	LOG4CXX_DEBUG(logger, "rows to move: " << toMove);
+	int topRow = row - screenRow - toMove;
+	int newRow = row - toMove;
+	if (topRow < 0) {
+		screenRow += topRow;
 	}
-	LOG4CXX_DEBUG(logger, "offset: " << offset);
-	row += offset;
-	scr->repaint(data, max(topRow + offset, 0));
+	if (newRow < 0) {
+		screenRow -= newRow;
+		newRow = 0;
+	}
+	if (screenRow < 0) screenRow = 0;
+	LOG4CXX_DEBUG(logger, "new buffer row: " << newRow);
+	LOG4CXX_DEBUG(logger, "new screen row: " << screenRow);
+	row = newRow;
+	scr->repaint(data, row, screenRow);
+	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Buffer::pageDown() {
+	LOG4CXX_TRACE(logger, "enter");
 	firstKill = true;
-	int topRow = row - scr->getRow();
-	LOG4CXX_DEBUG(logger, "Current toprow: " << topRow);
-	int offset = scr->getHeight() - 2;
-	if (row + offset > data.size()) {
-		offset = data.size() - row;
+	int maxRow = data.size() - 1;
+	int toMove = scr->getHeight() - 2;
+	int maxScreen = scr->getHeight() - 1;
+	int screenRow = scr->getRow();
+	LOG4CXX_DEBUG(logger, "rows to move: " << toMove);
+	int botRow = row + scr->getHeight() - screenRow + toMove;
+	int newRow = row + toMove;
+	if (botRow > maxRow) {
+		int diff = botRow - maxRow;
+		screenRow += diff;
 	}
-	LOG4CXX_DEBUG(logger, "offset: " << offset);
-	row += offset;
-	scr->repaint(data, topRow + offset);
+	if (newRow > maxRow) {
+		int diff = newRow - maxRow;
+		screenRow += diff;
+		newRow = maxRow;
+	}
+	if (screenRow > maxScreen) screenRow = maxScreen;
+	LOG4CXX_DEBUG(logger, "new buffer row: " << newRow);
+	LOG4CXX_DEBUG(logger, "new screen row: " << screenRow);
+	row = newRow;
+	scr->repaint(data, row, screenRow);
+	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Buffer::dump() {
@@ -284,7 +308,7 @@ void Buffer::setFocus() {
 	scr->refresh();
 }
 
-Screen* Buffer::getMainWin() {
+Screen* Buffer::getScr() {
 	return scr;
 }
 

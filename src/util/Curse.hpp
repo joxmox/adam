@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <mutex>
 
 #include "log4cxx/logger.h"
 
@@ -24,6 +25,7 @@ class Curse {
 	int width;
 	vector<void*> winMap;
 	static log4cxx::LoggerPtr logger;
+	static mutex gMaster;
 public:
 	Curse();
 	~Curse();
@@ -57,6 +59,7 @@ public:
 	void pos(int id, int row, int col);
 	void insertChar(int id, char c);
 	void printStr(int id, const string& s);
+	void printStr(int id, char s);
 	int getHeight();
 	int getWidth();
 	int readKey(int id);
@@ -99,6 +102,7 @@ public:
 	void setRow(int row);
 	void insertChar(char c);
 	void printStr(const string& s);
+	void printStr(char s);
 	void refresh();
 	int readKey();
 	void setAttr(curseAttrs attr);
