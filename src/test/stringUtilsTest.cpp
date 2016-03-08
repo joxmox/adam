@@ -13,6 +13,7 @@
 using namespace std;
 using namespace str;
 
+
 TEST(split, basic) {
 	string str {"The quick brown fox"};
 	vector<string> result {str::split(str, " ")};
@@ -35,6 +36,35 @@ TEST(split, multi_char) {
 	EXPECT_EQ("two", result[0]);
 	EXPECT_EQ("spaces", result[1]);
 }
+
+TEST(match, basic) {
+	string str {"sune=(17)"};
+	string patt = R"((.*)=\((.*)\))";
+	vector<string> result {str::match(str, patt)};
+	EXPECT_EQ(3, result.size());
+	EXPECT_EQ("sune", result[1]);
+	EXPECT_EQ("17", result[2]);
+}
+
+TEST(match, complex) {
+	string str1 {"down()"};
+	string str2 {"delete(17)"};
+	string str3 {"string(\"kalle anka\")"};
+	string patt = R"(^(.*?)\(\"?(.*?)\"?\)$)";
+	vector<string> result;
+	result = str::match(str1, patt);
+	EXPECT_EQ(3, result.size());
+	EXPECT_EQ("down", result[1]);
+	EXPECT_EQ("", result[2]);
+	result = str::match(str2, patt);
+	EXPECT_EQ(3, result.size());
+	EXPECT_EQ("delete", result[1]);
+	EXPECT_EQ("17", result[2]);
+	result = str::match(str3, patt);
+	EXPECT_EQ("string", result[1]);
+	EXPECT_EQ("kalle anka", result[2]);
+}
+
 
 
 

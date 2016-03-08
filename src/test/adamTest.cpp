@@ -216,39 +216,39 @@ struct Adam : public ::testing::Test {
 	}
 };
 
-TEST_F(Adam, edit1) {
-	createFile("kaka.tmp", fBuf1);
-	Editor ed {fileName};
-	ed.edit(cBuf1, "");
-	ifstream ifs {"kaka.tmp"};
-	string line;
-	vector<string> tBuf1;
-	while (getline(ifs, line)) {
-		tBuf1.push_back(line);
-	}
-	EXPECT_EQ(rBuf1.size() , tBuf1.size());
-	for (int i = 0; i < rBuf1.size(); i++) {
-		EXPECT_EQ(rBuf1[i], tBuf1[i]);
-	}
-	EXPECT_EQ(rBuf1, tBuf1);
-}
-
-TEST_F(Adam, learn1) {
-	createFile("kaka.tmp", fBuf2);
-	Editor ed {fileName};
-	ed.edit(cBuf2, "");
-	ifstream ifs {"kaka.tmp"};
-	string line;
-	vector<string> tBuf2;
-	while (getline(ifs, line)) {
-		tBuf2.push_back(line);
-	}
-	EXPECT_EQ(rBuf2.size() , tBuf2.size());
-	for (int i = 0; i < rBuf2.size(); i++) {
-		EXPECT_EQ(rBuf2[i], tBuf2[i]);
-	}
-	EXPECT_EQ(rBuf2, tBuf2);
-}
+//TEST_F(Adam, edit1) {
+//	createFile("kaka.tmp", fBuf1);
+//	Editor ed {fileName};
+//	ed.edit(cBuf1, "");
+//	ifstream ifs {"kaka.tmp"};
+//	string line;
+//	vector<string> tBuf1;
+//	while (getline(ifs, line)) {
+//		tBuf1.push_back(line);
+//	}
+//	EXPECT_EQ(rBuf1.size() , tBuf1.size());
+//	for (int i = 0; i < rBuf1.size(); i++) {
+//		EXPECT_EQ(rBuf1[i], tBuf1[i]);
+//	}
+//	EXPECT_EQ(rBuf1, tBuf1);
+//}
+//
+//TEST_F(Adam, learn1) {
+//	createFile("kaka.tmp", fBuf2);
+//	Editor ed {fileName};
+//	ed.edit(cBuf2, "");
+//	ifstream ifs {"kaka.tmp"};
+//	string line;
+//	vector<string> tBuf2;
+//	while (getline(ifs, line)) {
+//		tBuf2.push_back(line);
+//	}
+//	EXPECT_EQ(rBuf2.size() , tBuf2.size());
+//	for (int i = 0; i < rBuf2.size(); i++) {
+//		EXPECT_EQ(rBuf2[i], tBuf2[i]);
+//	}
+//	EXPECT_EQ(rBuf2, tBuf2);
+//}
 
 
 

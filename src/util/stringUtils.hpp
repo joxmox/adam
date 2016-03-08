@@ -16,6 +16,7 @@ namespace str {
 using namespace std;
 
 vector<string> split(const string& str, const string& patt);
+vector<string> match(const string& str, const string& patt);
 
 }
 

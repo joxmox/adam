@@ -9,6 +9,8 @@
 #include <map>
 #include <stdexcept>
 #include <functional>
+#include <chrono>
+#include <thread>
 
 #include "log4cxx/logger.h"
 
@@ -16,6 +18,7 @@
 #include "Curse.hpp"
 #include "Editor.hpp"
 #include "Screen.hpp"
+#include "stringUtils.hpp"
 
 using namespace std;
 
@@ -29,10 +32,47 @@ Editor::Editor(const string& fileName) {
 
 Editor::~Editor() {
 	LOG4CXX_DEBUG(logger, "shutting down");
+	if (recFlag) {
+		LOG4CXX_DEBUG(logger, "saving record buffer");
+		saveRecord();
+	}
 	delete buf;
 	delete cmdWin;
 	delete messWin;
 	if (tty != nullptr) delete tty;
+}
+
+void Editor::saveRecord() {
+	ofstream ofs {recFile};
+	if (!ofs) throw runtime_error("could not open " + recFile + " for output");
+	vector<int>::iterator it = recBuf.begin();
+	while (it < recBuf.end()) {
+		string txt = "string(\"";
+		if (*it >= 32 && *it <= 126) {
+			if (*it == '"' || *it == '\\') txt.append("\\");
+			txt.append(1, *it);
+			while (it + 1 != recBuf.end() && *(it + 1) >= 32 && *(it + 1) <= 126) {
+				it++;
+				if (*it == '"' || *it == '\\') txt.append("\\");
+				txt.append(1, *it);
+			}
+			txt += "\")";
+		} else {
+			int key = *it;
+			txt = func2name[key];
+			int count = 0;
+			while (it + 1 != recBuf.end() && *(it + 1) == key) {
+				count++;
+				it++;
+			}
+			if (count > 1) {
+				txt += "(" + to_string(count) + ")";
+			} else {
+				txt += "()";
+			}
+		}
+		ofs << txt << endl;
+		it++;	}
 }
 
 int Editor::getKey() {
@@ -52,7 +92,7 @@ void Editor::quit() {
 	loop = false;
 }
 
-void Editor::edit(const vector<int>& input, const string& record) {
+void Editor::edit(const string& input, const string& record) {
 	LOG4CXX_DEBUG(logger, "starting");
 
 	initDispatch();
@@ -74,12 +114,39 @@ void Editor::edit(const vector<int>& input, const string& record) {
 	}
 
 	if (!input.empty()) {
-		inKeys = input;
+		LOG4CXX_DEBUG(logger, "reading simulated keys from file " << input);
+		ifstream ifs {input};
+		if (!ifs) throw invalid_argument("cannot open input file " + input);
+		string line;
+		while (getline(ifs, line)) {
+			if (!line.empty()) {
+				if (line.back() != ')') line.append("()");
+				vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
+				if (vec.size() != 3) throw logic_error("cannot parse input file - " + line);
+				string func {vec[1]};
+				if (func == "string") {
+					string::iterator it {vec[2].begin()};
+					while (it != vec[2].end()) {
+						if (*it == '\\') it++;
+						inKeys.push_back(*(it++));
+					}
+				} else {
+					int cnt;
+					int key = name2func[func];
+					if (vec[2].empty()) {
+						cnt = 1;
+					} else {
+					  cnt = stoi(vec[2]);
+					}
+					for (int i = 0; i < cnt; i++) inKeys.push_back(key);
+				}
+			}
+		}
 	}
 
 	if (!record.empty()) {
-		recFile.open(record);
-		if (!recFile) throw runtime_error("could not open " + record + " for output");
+		recFile = record;
+		LOG4CXX_DEBUG(logger, "session input will be saved to file " << recFile);
 		recFlag = true;
 	}
 	mainLoop();
@@ -93,6 +160,7 @@ void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
 		if (!inKeys.empty()) {
+			this_thread::sleep_for(chrono::milliseconds(25));
 			key = inKeys.front();
 			inKeys.erase(inKeys.begin());
 			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");
@@ -104,42 +172,44 @@ void Editor::mainLoop() {
 			LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		}
 		if (learnFlag) learnBuf.back().push_back(key);
-		if (recFlag) recFile << key << endl;
+		if (recFlag) recBuf.push_back(key);
 		disMap[key](this);
 	}
 }
 
-void Editor::setDisp(int key, funcFun f) {
+void Editor::setDisp(const string& name, int key, funcFun f) {
 	disMap[key] = f;
+	func2name[key] = name;
+	name2func[name] = key;
 }
 
-void Editor::setDisp(int key1, int key2, funcFun f) {
+void Editor::setDisp(const string& name, int key1, int key2, funcFun f) {
 	for (int i = key1; i <= key2; i++) {
-	    setDisp(i, f);
+	    setDisp(name, i, f);
 	}
 }
 
 
 void Editor::initDispatch() {
 	disMap = funcVec {1000, cbIllegalChar};
-	setDisp(4, cbDebug);
-	setDisp(5, cbGotoEol);
-	setDisp(8, cbGotoSol);
-	setDisp(11, cbKillLine);
-	setDisp(12, cbStartLearn); //FIXME: Temporary, should (also?) be a do command
-	setDisp(13, cbReturn);
-	setDisp(16, cbPaste);
-	setDisp(18, cbRemember);
-	setDisp(24, cbQuit);
-	setDisp(26, cbExit);
-	setDisp(32, 126, cbNormChar);
-	setDisp(258, cbMoveDown);
-	setDisp(259, cbMoveUp);
-	setDisp(260, cbMoveLeft);
-	setDisp(261, cbMoveRight);
-	setDisp(263, cbBackSpace);
-	setDisp(338, cbPageDown);
-	setDisp(339, cbPageUp);
+	setDisp("debug", 4, cbDebug);
+	setDisp("eol", 5, cbGotoEol);
+	setDisp("sol", 8, cbGotoSol);
+	setDisp("kill", 11, cbKillLine);
+	setDisp("learn", 12, cbStartLearn); //FIXME: Temporary, should (also?) be a do command
+	setDisp("cr", 13, cbReturn);
+	setDisp("pasteBuffer", 16, cbPaste);
+	setDisp("remember", 18, cbRemember);
+	setDisp("quit", 24, cbQuit);
+	setDisp("exit", 26, cbExit);
+	setDisp("char", 32, 126, cbNormChar);
+	setDisp("down", 258, cbMoveDown);
+	setDisp("up", 259, cbMoveUp);
+	setDisp("left", 260, cbMoveLeft);
+	setDisp("right", 261, cbMoveRight);
+	setDisp("delete", 263, cbBackSpace);
+	setDisp("pgdown", 338, cbPageDown);
+	setDisp("pgup", 339, cbPageUp);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
 }
 
@@ -159,11 +229,11 @@ void Editor::remember() {
 			key = inKeys.front();
 			inKeys.erase(inKeys.begin());
 		}
-		if (recFlag) recFile << key << endl;
+		if (recFlag) recBuf.push_back(key);
 		if (key != 13) {
 			learnBuf.back().pop_back(); // remove last char, which is ctrl-r
 			learnMap[key] = learnBuf.size() - 1;
-			setDisp(key, cbDoLearned);
+			setDisp("recall", key, cbDoLearned);
 			LOG4CXX_DEBUG(logger, "learned, buffer entry: " << learnBuf.size() - 1);
 			buf->getMainWin()->printMessage("Key sequence remembered.");
 		} else {

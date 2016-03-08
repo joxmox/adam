@@ -23,6 +23,18 @@ vector<string> split(const string& str, const string& patt) {
 	return r;
 }
 
+vector<string> match(const string& str, const string& patt) {
+	regex e(patt);
+	smatch sm;
+	vector<string> r;
+	if (regex_match(str, sm, e)) {
+		for (auto s : sm) {
+			r.push_back(s.str());
+		}
+	}
+	return r;
+}
+
 }
 
 

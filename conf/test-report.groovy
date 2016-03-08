@@ -2,7 +2,7 @@ import groovy.xml.XmlUtil
 
 def outDir    = './build/docs/test'
 def xmlDir    = "${outDir}/xml"
-def namespace = 'cpp4seb.wave4.project'
+def namespace = 'adam'
 
 // parse cmd args
 args.each {arg ->

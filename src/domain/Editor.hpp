@@ -45,14 +45,18 @@ class Editor {
 	map<int, int> learnMap;
 	vector<int> inKeys;
 	bool recFlag = false;
-	ofstream recFile;
+	string recFile;
+	vector<int> recBuf;
 	funcVec disMap;
+	map<string, int> name2func;
+	map<int, string> func2name;
 	static log4cxx::LoggerPtr logger;
 	string getBufferName(const string& fileName);
 	void mainLoop();
 	void initDispatch();
-	void setDisp(int key, funcFun f);
-	void setDisp(int key1, int key2, funcFun f);
+	void saveRecord();
+	void setDisp(const string& name, int key, funcFun f);
+	void setDisp(const string& name, int key1, int key2, funcFun f);
 	void startLearn();
 	void remember();
 	void doLearned();
@@ -80,7 +84,7 @@ class Editor {
 public:
 	Editor(const string& fileName);
 	~Editor();
-	void edit(const vector<int>& input, const string& record);
+	void edit(const string& input, const string& record);
 	int getKey();
 	Buffer* getBuffer();
 	void exit();

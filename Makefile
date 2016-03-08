@@ -159,14 +159,11 @@ $(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp
 test_compile : lib $(bin)unitTest
 
 test_run : 
-	gnome-terminal -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml\""
+	gnome-terminal -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml ; exec bash\""
 
 test_report :
-	@if [ -e $(docTst)gtest-results.xml ] && `which groovy > /dev/null`; then \
-		groovy $(cfg)test-report.groovy -dir=$(docTst) < $(docTst)gtest-results.xml 2> /dev/null; \
-	else \
-		echo "*** cannot generate HTML test report. please, install groovy"; \
-	fi
+	groovy $(cfg)test-report.groovy -dir=$(docTst) < $(docTst)gtest-results.xml 2> /dev/null
+
 
 test_show : 
 	@if [ -e $(docTst)index.html ]; then \
