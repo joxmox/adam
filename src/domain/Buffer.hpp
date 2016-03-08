@@ -22,8 +22,6 @@ class Buffer {
 public:
 	const string eobStr = "[End of file]";
 private:
-	int topLine = 0;
-	int maxLine = 0;
 	int row = 0;
 	int col = 0;
 	vector<pair<int, int>> posStack;

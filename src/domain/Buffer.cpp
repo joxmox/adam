@@ -21,8 +21,6 @@ LoggerPtr Buffer::logger{Logger::getLogger("Buffer")};
 
 Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr): fileName(fileName), bufName(bufName), scr(scr) {
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
-	maxLine = -1;
-	topLine = 0;
 }
 
 Buffer::~Buffer() {
@@ -42,24 +40,24 @@ int Buffer::readFile(const string& fileName) {
 	string readFile = fileName;
 	if (readFile.empty()) readFile = this->fileName;
 	LOG4CXX_DEBUG(logger, "loading file " << readFile << " into buffer");
+	int count = -1;
 	ifstream inf{readFile};
-	maxLine = 0;
 	if (inf) {
-		string line;
 		push();
+		string line;
+		count = 0;
 		while (getline(inf, line)) {
 			data.insert(data.begin() + row++, line);
-			maxLine++;
-			col = 0;
+			count++;
 		}
-		printMessage(to_string(maxLine) + " lines read from file " + this->fileName);
+		printMessage(to_string(count) + " lines read from file " + this->fileName);
 		pop();
 	} else {
 		printMessage("Editing new file.  Could not find: " + this->fileName);
 	}
-	scr->repaint(data, topLine);
+	scr->repaint(data, row);
 	updateStatus();
-	return maxLine;
+	return count;
 }
 
 bool Buffer::fileExists() {
@@ -78,7 +76,7 @@ bool Buffer::atBotRow() {
 }
 
 int Buffer::getLines() {
-	return maxLine;
+	return data.size() - 1;
 }
 
 void Buffer::adjustBuffer(int type) {
