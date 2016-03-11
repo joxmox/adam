@@ -195,30 +195,6 @@ void Buffer::deleteChar() {
 		}
 		LOG4CXX_TRACE(logger, "exit");
 	}
-
-//	DBG << "enter" << endl;
-//	adjust();
-//	if (pos.getCol() > 0) {
-//		tty->move(--pos);
-//		tty->delChar();
-//		buf->delChar();
-//	} else {
-//		int br = buf->getRow();
-//		DBG << "Buffer row: " << br << endl;
-//		if (br > 0) {
-//			int nc = buf->joinLines();
-//			DBG << "new column: " << nc << endl;
-//			tty->delLine();
-//			pos.moveUp();
-//			tty->move(pos);
-//			DBG << "new pos (after move up): " << pos << endl;
-//			tty->print(buf->getCurLine());
-//			tty->move(siz.getLowLeft());
-//			tty->print(buf->getLine(siz.getEndRow() + br - pos.getRow() - 1));
-//			pos.setCol(nc);
-//			buf->recalcMarks(-1);
-//		}
-//	}
 }
 
 void Buffer::gotoSol() {

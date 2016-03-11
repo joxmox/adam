@@ -34,6 +34,7 @@ void f(Win* w) {
 		int key = w->readKey();
 		w->pos(9, 0);
 		w->printStr(string(1, key));
+		w->refresh();
 	}
 }
 
@@ -42,13 +43,17 @@ int main() {
 	Curse c;
 	Win* w1 = c.creWin(10,20,0,0);
 	Win* w2 = c.creWin(10,20,12,20);
-	w1->pos(0, 0);
-	w1->printStr("Hello!");
-	w1->refresh();
+	Win* w3 = c.creWin(10,20,6, 40);
+	w3->pos(0, 0);
+	w3->printStr("Hello!");
+	w3->refresh();
 	thread t1 {f, w1};
 	thread t2 {f, w2};
 	t1.join();
 	t2.join();
+	w3->pos(1, 0);
+	w3->printStr("Done!");
+	w3->refresh();
 	this_thread::sleep_for(chrono::milliseconds(2000));
 	delete w1;
 	delete w2;

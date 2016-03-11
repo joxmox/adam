@@ -36,13 +36,13 @@ Curse::Curse() {
 
 Curse::~Curse() {
 	LOG4CXX_DEBUG(logger, "shutting down curses");
-	lock_guard<mutex> guard(gMaster);
 	for (auto id = 1; id < winMap.size(); id++) {
 		if (winMap[id]) {
 			LOG4CXX_WARN(logger, "found stray WINDOW " << id << ". deleting, but you should delete this explicitly!");
 			delWin(id);
 		}
 	}
+	lock_guard<mutex> guard(gMaster);
 	endwin();
 }
 
@@ -70,9 +70,9 @@ int Curse::addWin(int height, int width, int row, int col) {
 }
 
 void Curse::delWin(int id) {
-	lock_guard<mutex> guard(gMaster);
 	if (winMap[id]) {
 		LOG4CXX_DEBUG(logger, "deleting ncurses WINDOW. id=" << id);
+		lock_guard<mutex> guard(gMaster);
 	    delwin(static_cast<WINDOW*>(winMap[id]));
 	    winMap[id] = nullptr;
 	} else {
