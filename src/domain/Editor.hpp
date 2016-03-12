@@ -31,6 +31,7 @@ using funcFun = void (*)(Editor*);
 using funcVec = vector<funcFun>;
 
 class Editor {
+	const string RECORD_VERSION = "1,1";
 	Curse* tty = nullptr;
 	Win* cmdWin = nullptr;
 	Win* messWin = nullptr;
@@ -53,8 +54,11 @@ class Editor {
 	static log4cxx::LoggerPtr logger;
 	string getBufferName(const string& fileName);
 	void mainLoop();
+	void readReplay(const string& replay);
+	void readReplayVer1(istream& ifs);
 	void initDispatch();
 	void saveRecord();
+	void save2();
 	void setDisp(const string& name, int key, funcFun f);
 	void setDisp(const string& name, int key1, int key2, funcFun f);
 	void startLearn();

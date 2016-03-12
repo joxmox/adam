@@ -21,30 +21,32 @@ LoggerPtr logger{Logger::getLogger("adam")};
 int main(int argc, char* argv[]) {
     PropertyConfigurator::configure("conf/log4cxx.conf");
 	LOG4CXX_DEBUG(logger, "adam starting");
-	string usage = "usage: " + string(argv[0]) + " <file name> [--debug <debug level>]";
+	string usage = "usage: " + string(argv[0]) + " <file name> [--replay <filename>] [--record <filename>]";
 
-	string fileName;
+	vector<string> params;
 	string input;
 	string record;
-
-	if (argc > 1) {
-		fileName = argv[1];
-	}
-
-	for (int k = 2; k < argc; ++k) {
+	for (int k = 1; k < argc; ++k) {
 		string arg = argv[k];
-		if (arg == "--input") {
-			LOG4CXX_DEBUG(logger, "option input: " << argv[++k]);
-			input = argv[k];
-		} else if (arg == "--record") {
-			LOG4CXX_DEBUG(logger, "record input: " << argv[++k]);
-			record = argv[k];
+		if (arg[0] == '-') {
+			if (arg == "--replay" || arg == "-p") {
+				LOG4CXX_DEBUG(logger, "option replay: " << argv[++k]);
+				input = argv[k];
+			} else if (arg == "--record" || arg == "-r") {
+				LOG4CXX_DEBUG(logger, "option record: " << argv[++k]);
+				record = argv[k];
+			} else {
+				cerr << argv[0] << "Invalid option -- " << arg << endl << usage << endl;
+				return 1;
+			}
 		} else {
-			cerr << argv[0] << "Invalid option -- " << arg << endl << usage << endl;
-			return 1;
+			params.push_back(arg);
 		}
 
 	}
+
+	string fileName;
+	if (params.size() > 0) fileName = params[0];
 
     if (fileName.empty()) {
     	cerr << argv[0] << "No filename specified" << endl << usage << endl;

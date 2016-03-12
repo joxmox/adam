@@ -45,15 +45,17 @@ Editor::~Editor() {
 void Editor::saveRecord() {
 	ofstream ofs {recFile};
 	if (!ofs) throw runtime_error("could not open " + recFile + " for output");
+	ofs << "version(" << RECORD_VERSION << ")" << endl;
 	vector<int>::iterator it = recBuf.begin();
 	while (it < recBuf.end()) {
 		string txt = "string(\"";
 		if (*it >= 32 && *it <= 126) {
 			if (*it == '"' || *it == '\\') txt.append("\\");
 			txt.append(1, *it);
-			while (it + 1 != recBuf.end() && *(it + 1) >= 32 && *(it + 1) <= 126) {
+			while (it + 1 != recBuf.end() && ((*(it + 1) >= 32 && *(it + 1) <= 126) || *(it + 1) == 13)) {
 				it++;
-				if (*it == '"' || *it == '\\') txt.append("\\");
+				if (*it == '"' || *it == '\\' || *it == 13) txt.append("\\");
+				if (*it == 13) *it = 'n';
 				txt.append(1, *it);
 			}
 			txt += "\")";
@@ -72,7 +74,8 @@ void Editor::saveRecord() {
 			}
 		}
 		ofs << txt << endl;
-		it++;	}
+		it++;
+	}
 }
 
 int Editor::getKey() {
@@ -114,34 +117,8 @@ void Editor::edit(const string& input, const string& record) {
 	}
 
 	if (!input.empty()) {
-		LOG4CXX_DEBUG(logger, "reading simulated keys from file " << input);
-		ifstream ifs {input};
-		if (!ifs) throw invalid_argument("cannot open input file " + input);
-		string line;
-		while (getline(ifs, line)) {
-			if (!line.empty()) {
-				if (line.back() != ')') line.append("()");
-				vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
-				if (vec.size() != 3) throw logic_error("cannot parse input file - " + line);
-				string func {vec[1]};
-				if (func == "string") {
-					string::iterator it {vec[2].begin()};
-					while (it != vec[2].end()) {
-						if (*it == '\\') it++;
-						inKeys.push_back(*(it++));
-					}
-				} else {
-					int cnt;
-					int key = name2func[func];
-					if (vec[2].empty()) {
-						cnt = 1;
-					} else {
-					  cnt = stoi(vec[2]);
-					}
-					for (int i = 0; i < cnt; i++) inKeys.push_back(key);
-				}
-			}
-		}
+		LOG4CXX_DEBUG(logger, "replay option specified");
+		readReplay(input);
 	}
 
 	if (!record.empty()) {
@@ -151,6 +128,59 @@ void Editor::edit(const string& input, const string& record) {
 	}
 	mainLoop();
 }
+
+void Editor::readReplay(const string& input) {
+	LOG4CXX_DEBUG(logger, "reading simulated keys from file " << input);
+	ifstream ifs {input};
+	if (!ifs) throw invalid_argument("cannot open replay file " + input);
+	string line;
+	if (getline(ifs, line)) {
+		vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
+		if (vec.size() != 3 || vec[1] != "version") throw logic_error("invalid header record in replay file - " + line);
+		string version = vec[2];
+		LOG4CXX_DEBUG(logger, "replay file version = " << version);
+		vec = str::split(version, ",");
+		int major = stoi(vec[0]);
+		int minor = 0;
+		if (vec.size() > 1) minor = stoi(vec[1]);
+		switch (major) {
+		case 1:
+			readReplayVer1(ifs);
+			break;
+		default:
+			throw logic_error("unsupported replay file version - " + version);
+		}
+	}
+}
+
+void Editor::readReplayVer1(istream& ifs) {
+	string line;
+	while (getline(ifs, line)) {
+		if (!line.empty()) {
+			if (line.back() != ')') line.append("()");
+			vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
+			if (vec.size() != 3) throw logic_error("cannot parse replay file - " + line);
+			string func {vec[1]};
+			if (func == "string") {
+				string::iterator it {vec[2].begin()};
+				while (it != vec[2].end()) {
+					if (*it == '\\') it++;
+					inKeys.push_back(*(it++));
+				}
+			} else {
+				int cnt;
+				int key = name2func[func];
+				if (vec[2].empty()) {
+					cnt = 1;
+				} else {
+				  cnt = stoi(vec[2]);
+				}
+				for (int i = 0; i < cnt; i++) inKeys.push_back(key);
+			}
+		}
+	}
+}
+
 
 string Editor::getBufferName(const string& fileName) {
 	return fileName;
