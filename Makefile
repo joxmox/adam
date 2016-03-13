@@ -118,6 +118,7 @@ $(objLib)stringUtils.o : $(utl)stringUtils.cpp $(utl)stringUtils.hpp
 $(objLib)Curse.o : $(utl)Curse.cpp $(utl)Curse.hpp 
 	$(compile)
 	
+	
 $(objLib)Screen.o : $(dom)Screen.cpp $(dom)Screen.hpp $(utl)Curse.hpp
 	$(compile)
 	
@@ -180,6 +181,10 @@ $(objTst)stringUtilsTest.o : $(tst)stringUtilsTest.cpp  $(utl)stringUtils.hpp $(
 
 $(objTst)adamTest.o : $(tst)adamTest.cpp  
 	$(compile) $(tst_incl)
+	
+$(objTst)ParseTest.o : $(tst)ParseTest.cpp  
+	$(compile) $(tst_incl)
+	
 
 
 
