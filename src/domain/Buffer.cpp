@@ -352,3 +352,7 @@ void Buffer::saveToFile(const string& fileName) {
 	}
 	data.push_back(tmp);
 }
+
+string Buffer::readCommand() {
+	return scr->readCommand();
+}

@@ -19,7 +19,7 @@
 
 #include "Buffer.hpp"
 #include "Curse.hpp"
-
+#include "Parse.hpp"
 
 
 using namespace std;
@@ -52,6 +52,7 @@ class Editor {
 	map<string, int> name2func;
 	map<int, string> func2name;
 	static log4cxx::LoggerPtr logger;
+	static Parse<Editor>* parse;
 	string getBufferName(const string& fileName);
 	void mainLoop();
 	void readReplay(const string& replay);
@@ -84,6 +85,8 @@ class Editor {
 	static void cbPageDown(Editor* ed);
 	static void cbKillLine(Editor* ed);
 	static void cbPaste(Editor* ed);
+	static void cbDo(Editor* ed);
+	static void cmdLearn(Editor* ed, const vector<string>& params);
 
 public:
 	Editor(const string& fileName);

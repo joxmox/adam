@@ -125,7 +125,7 @@ $(objLib)Screen.o : $(dom)Screen.cpp $(dom)Screen.hpp $(utl)Curse.hpp
 $(objLib)Buffer.o : $(dom)Buffer.cpp $(dom)Buffer.hpp $(dom)Screen.hpp
 	$(compile)
 
-$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp $(dom)Screen.hpp
+$(objLib)Editor.o : $(dom)Editor.cpp $(dom)Editor.hpp $(dom)Buffer.hpp $(utl)Curse.hpp $(dom)Screen.hpp $(utl)Parse.hpp
 	$(compile)
 
 

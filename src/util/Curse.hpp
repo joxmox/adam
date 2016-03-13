@@ -63,6 +63,7 @@ public:
 	int getHeight();
 	int getWidth();
 	int readKey(int id);
+	string readString(int id);
 	void refresh(int id = -1);
 	void setAttr(int id, curseAttrs attr);
 	void clearAttr(int id, curseAttrs attr);
@@ -105,6 +106,7 @@ public:
 	void printStr(char s);
 	void refresh();
 	int readKey();
+	string readString();
 	void setAttr(curseAttrs attr);
 	void clearAttr(curseAttrs attr);
 	void clearEol();

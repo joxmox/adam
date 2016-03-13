@@ -14,13 +14,18 @@
 #include <regex>
 #include "stringUtils.hpp"
 
+#include "log4cxx/logger.h"
+
+
 using namespace std;
+using namespace log4cxx;
 
 template<typename Object>
 class Parse {
 public:
-	using cbFun = void (*)(Object*, vector<string>&);
+	using cbFun = void (*)(Object*, const vector<string>&);
 private:
+	LoggerPtr logger{Logger::getLogger("Parse")};
 	vector<pair<regex, cbFun>> funcArr;
 	map<string, int>parseMap;
 public:
@@ -48,9 +53,11 @@ public:
     }
 
     void decode(Object* obj, const string& cmd) const {
+    	LOG4CXX_TRACE(logger, "enter");
     	cbFun res;
     	int cnt = 0;
     	if (regex_match(cmd, regex("^\\s*$"))) {
+			LOG4CXX_DEBUG(logger, "no command given");
     		// callback no command;
     		return;
     	}
@@ -59,6 +66,7 @@ public:
     	for (auto p : funcArr) {
     		if (regex_match(cmd, pMatch, p.first)) {
     			if (++cnt > 1) {
+    				LOG4CXX_DEBUG(logger, "command '" << cmd << "' is amigous");
     				// callback ambigous;
     				return;
     			} else {
@@ -70,10 +78,13 @@ public:
     		}
     	}
 		if (cnt == 0) {
+			LOG4CXX_DEBUG(logger, "command '" << cmd << "' could not be parses");
 			// callback no match
 		} else {
+			LOG4CXX_DEBUG(logger, "command '" << cmd << "' is valid - dispatching");
 			res(obj, params);
 		}
+		LOG4CXX_TRACE(logger, "exit");
     }
 };
 

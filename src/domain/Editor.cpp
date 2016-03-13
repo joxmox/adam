@@ -23,6 +23,7 @@
 using namespace std;
 
 LoggerPtr Editor::logger{Logger::getLogger("Editor")};
+Parse<Editor>* Editor::parse;
 
 Editor::Editor(const string& fileName) {
 	this->fileName = fileName;
@@ -238,9 +239,14 @@ void Editor::initDispatch() {
 	setDisp("left", 260, cbMoveLeft);
 	setDisp("right", 261, cbMoveRight);
 	setDisp("delete", 263, cbBackSpace);
+	setDisp("do", 276, cbDo);
 	setDisp("pgdown", 338, cbPageDown);
 	setDisp("pgup", 339, cbPageUp);
 	LOG4CXX_DEBUG(logger, "dispatch table initialized");
+	map<string, Parse<Editor>::cbFun> funcTab {
+		{"learn", cmdLearn},
+	};
+	parse = new Parse<Editor> {funcTab};
 }
 
 void Editor::startLearn() {
@@ -328,6 +334,14 @@ void Editor::cbPageUp(Editor* ed) {ed->getBuffer()->pageUp();}
 void Editor::cbPageDown(Editor* ed) {ed->getBuffer()->pageDown();}
 void Editor::cbKillLine(Editor* ed) {ed->getBuffer()->killLine();}
 void Editor::cbPaste(Editor* ed) {ed->getBuffer()->paste();}
+
+void Editor::cbDo(Editor* ed) {
+	string cmd = ed->getBuffer()->readCommand();
+	LOG4CXX_DEBUG(logger, "got string: " << cmd);
+	parse->decode(ed, cmd);
+}
+
+void Editor::cmdLearn(Editor* ed, const vector<string>& params) {ed->startLearn();}
 
 
 

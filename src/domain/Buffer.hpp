@@ -73,5 +73,6 @@ public:
 	void paste();
 	void insertLine(const string& s);
 	void saveToFile(const string& fileName);
+	string readCommand();
 };
 

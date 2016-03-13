@@ -38,6 +38,7 @@ public:
 	void printMessage(const string& str);
 	void printWarning(const string& str);
 	void printCommand(const string& str);
+	string readCommand();
 
 	void push();
 	void push(int r, int c);

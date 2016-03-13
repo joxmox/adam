@@ -22,18 +22,18 @@ vector<string> xParam;
 class MiniBuf {
 public:
 	MiniBuf() {}
-	static void cb1(MiniBuf* mb, vector<string>& pv) {
+	static void cb1(MiniBuf* mb, const vector<string>& pv) {
 		xParam = pv;
 		result = 17;
 	}
-	static void cb2(MiniBuf* mb, vector<string>& pv) {
+	static void cb2(MiniBuf* mb, const vector<string>& pv) {
 		result = 666;
 	}
-	static void cb3(MiniBuf* mb, vector<string>& pv) {
+	static void cb3(MiniBuf* mb, const vector<string>& pv) {
 		result = 4711;
 		xParam = pv;
 	}
-	static void cb4(MiniBuf* mb, vector<string>& pv) {
+	static void cb4(MiniBuf* mb, const vector<string>& pv) {
 		result = -1;
 		xParam = pv;
 	}

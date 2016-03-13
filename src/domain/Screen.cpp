@@ -113,6 +113,18 @@ void Screen::printCommand(const string& str) {
 	cmdWin->refresh();
 }
 
+string Screen::readCommand() {
+	string prompt = "Command: ";
+	cmdWin->pos(0, 0);
+	cmdWin->printStr(prompt);
+	cmdWin->pos(0, prompt.size());
+	cmdWin->clearEol();
+	cmdWin->refresh();
+	string cmd = cmdWin->readString();
+	cmdWin->refresh();
+	return cmd;
+}
+
 
 void Screen::push() {
 	posStack.push_back({row, col});

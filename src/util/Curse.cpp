@@ -95,6 +95,15 @@ int Curse::readKey(int id) {
     return wgetch(static_cast<WINDOW*>(winMap[id]));
 }
 
+string Curse::readString(int id) {
+	LOG4CXX_TRACE(logger, "enter");
+	char buff[128];
+	wgetnstr(static_cast<WINDOW*>(winMap[id]), buff, 127);
+	LOG4CXX_DEBUG(logger, "read string " << string(buff) << " from keyboard");
+	return string(buff);
+	LOG4CXX_TRACE(logger, "exit");
+}
+
 void Curse::pos(int id, int row, int col) {
 	LOG4CXX_DEBUG(logger, "moving window id=" << id << " to " << row << "," << col);
 	lock_guard<mutex> guard(gMaster);
@@ -266,6 +275,10 @@ void Win::refresh() {
 
 int Win::readKey() {
 	return curse->readKey(id);
+}
+
+string Win::readString() {
+	return curse->readString(id);
 }
 
 void Win::setAttr(curseAttrs attr) {
