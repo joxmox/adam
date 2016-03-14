@@ -46,6 +46,8 @@ private:
 	void printMessage(const string& str);
 	void adjustBuffer(int type);
 	bool markModified();
+	void gotoAbs(int line);
+	void gotoRel(int offset);
 
 public:
 	Buffer(const string& bufName, const string& fileName = "", Screen* scr = nullptr , bool readOnly = false);
@@ -80,5 +82,8 @@ public:
 	string readCommand();
 	void commandError(const string& cmd, int errCode);
 	bool isModified();
+	void gotoLine(const string& line);
+	void gotoMark(const string& mark);
+	void setMark(const string& mark);
 };
 

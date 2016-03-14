@@ -414,3 +414,68 @@ bool Buffer::markModified() {
 	}
 	return (!readOnly);
 }
+
+void Buffer::gotoRel(int toMove) {
+	LOG4CXX_TRACE(logger, "enter");
+	firstKill = true;
+	int screenRow = scr->getRow();
+	LOG4CXX_DEBUG(logger, "rows to move: " << toMove);
+	int maxRow = data.size() - 1;
+	int maxScreen = scr->getHeight() - 1;
+	int newRow;
+	if (toMove < 0) {
+		int topRow = row - screenRow - toMove;
+		newRow = row - toMove;
+		if (topRow < 0) {
+			screenRow += topRow;
+		}
+		if (newRow < 0) {
+			screenRow -= newRow;
+			newRow = 0;
+		}
+		if (screenRow < 0) screenRow = 0;
+	} else {
+		int botRow = row + scr->getHeight() - screenRow + toMove;
+		newRow = row + toMove;
+		if (botRow > maxRow) {
+			int diff = botRow - maxRow;
+			screenRow += diff;
+		}
+		if (newRow > maxRow) {
+			int diff = newRow - maxRow;
+			screenRow += diff;
+			newRow = maxRow;
+		}
+		if (screenRow > maxScreen) screenRow = maxScreen;
+	}
+	LOG4CXX_DEBUG(logger, "new buffer row: " << newRow << " (" << row << ")");
+	LOG4CXX_DEBUG(logger, "new screen row: " << screenRow << " (" << scr->getRow() << ")");
+	row = newRow;
+	scr->repaint(data, row, screenRow);
+	LOG4CXX_TRACE(logger, "exit");
+
+}
+
+void Buffer::gotoAbs(int line) {
+	if (line > data.size() - 1 || line < 0) throw logic_error("cannot goto line outside buffer");
+	gotoRel(line - row);
+}
+
+void Buffer::gotoLine(const string& line) {
+	int iLine;
+	try {
+		iLine = stoi(line);
+	} catch (invalid_argument& e) {
+		iLine = -1;
+	}
+	if (iLine >= 0) gotoAbs(iLine);
+}
+
+void Buffer::gotoMark(const string& mark) {
+
+}
+
+
+void Buffer::setMark(const string& mark) {
+
+}

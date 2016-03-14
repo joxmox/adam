@@ -92,6 +92,9 @@ class Editor {
 	static void parseError(Editor* ed, int errCode);
 	static void cbDo(Editor* ed, const vector<string>& params);
 	static void cbWriteFile(Editor* ed, const vector<string>& params);
+	static void cbGotoLine(Editor* ed, const vector<string>& params);
+	static void cbGotoMark(Editor* ed, const vector<string>& params);
+	static void cbSetMark(Editor* ed, const vector<string>& params);
 
 public:
 	Editor(const string& fileName, const string& input, const string& record, bool readOnly);

@@ -245,7 +245,7 @@ void Editor::initDispatch() {
 	setDisp("eol", 5, cbGotoEol);
 	setDisp("sol", 8, cbGotoSol);
 	setDisp("kill", 11, cbKillLine);
-	setDisp("learn", 12, cbStartLearn); //FIXME: Temporary, should (also?) be a do command
+	setDisp("learn", 12, cbStartLearn);
 	setDisp("cr", 13, cbReturn);
 	setDisp("pasteBuffer", 16, cbPaste);
 	setDisp("remember", 18, cbRemember);
@@ -266,6 +266,9 @@ void Editor::initDispatch() {
 		{"quit", cbQuit},
 		{"write", cbWriteFile},
 		{"write *", cbWriteFile},
+		{"line *", cbGotoLine},
+		{"goto *", cbGotoMark},
+		{"mark *", cbSetMark},
 	};
 	parse = new Parse<Editor> {this, funcTab, parseError};
 	LOG4CXX_DEBUG(logger, "dispatch tables initialized");
@@ -385,6 +388,10 @@ void Editor::cbWriteFile(Editor* ed, const vector<string>& params) {
 	}
 	ed->getBuffer()->saveToFile(fileName);
 }
+
+void Editor::cbGotoLine(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoLine(params[0]);}
+void Editor::cbGotoMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoMark(params[0]);}
+void Editor::cbSetMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->setMark(params[0]);}
 
 
 
