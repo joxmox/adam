@@ -14,3 +14,5 @@ logs/
 CMakeLists.txt
 .idea/
 *settings.xml
+.settings/
+*.ptp-sync-folder
