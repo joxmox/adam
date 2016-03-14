@@ -27,7 +27,7 @@ using namespace log4cxx;
 
 class Editor;
 
-using funcFun = void (*)(Editor*);
+using funcFun = void (*)(Editor*, const vector<string>&);
 using funcVec = vector<funcFun>;
 
 class Editor {
@@ -39,6 +39,9 @@ class Editor {
 	string bufName;
 	map<string, Buffer*> bufMap;
 	string fileName;
+	string oInput;
+	string oRecord;
+	bool oReadOnly;
 	int key = 0;
 	bool loop = true;
 	bool learnFlag = false;
@@ -52,6 +55,7 @@ class Editor {
 	map<string, int> name2func;
 	map<int, string> func2name;
 	static log4cxx::LoggerPtr logger;
+	string command;
 	static Parse<Editor>* parse;
 	string getBufferName(const string& fileName);
 	void mainLoop();
@@ -65,39 +69,42 @@ class Editor {
 	void startLearn();
 	void remember();
 	void doLearned();
-	static void cbIllegalChar(Editor* ed);
-	static void cbNormChar(Editor* ed);
-	static void cbExit(Editor* ed);
-	static void cbQuit(Editor* ed);
-	static void cbDebug(Editor* ed);
-	static void cbMoveUp(Editor* ed);
-	static void cbMoveDown(Editor* ed);
-	static void cbMoveLeft(Editor* ed);
-	static void cbMoveRight(Editor* ed);
-	static void cbReturn(Editor* ed);
-	static void cbBackSpace(Editor* ed);
-	static void cbGotoSol(Editor* ed);
-	static void cbGotoEol(Editor* ed);
-	static void cbStartLearn(Editor* ed);
-	static void cbRemember(Editor* ed);
-	static void cbDoLearned(Editor* ed);
-	static void cbPageUp(Editor* ed);
-	static void cbPageDown(Editor* ed);
-	static void cbKillLine(Editor* ed);
-	static void cbPaste(Editor* ed);
-	static void cbDo(Editor* ed);
-	static void cmdLearn(Editor* ed, const vector<string>& params);
+	static void cbIllegalChar(Editor* ed, const vector<string>& params);
+	static void cbNormChar(Editor* ed, const vector<string>& params);
+	static void cbExit(Editor* ed, const vector<string>& params);
+	static void cbQuit(Editor* ed, const vector<string>& params);
+	static void cbDebug(Editor* ed, const vector<string>& params);
+	static void cbMoveUp(Editor* ed, const vector<string>& params);
+	static void cbMoveDown(Editor* ed, const vector<string>& params);
+	static void cbMoveLeft(Editor* ed, const vector<string>& params);
+	static void cbMoveRight(Editor* ed, const vector<string>& params);
+	static void cbReturn(Editor* ed, const vector<string>& params);
+	static void cbBackSpace(Editor* ed, const vector<string>& params);
+	static void cbGotoSol(Editor* ed, const vector<string>& params);
+	static void cbGotoEol(Editor* ed, const vector<string>& params);
+	static void cbStartLearn(Editor* ed, const vector<string>& params);
+	static void cbRemember(Editor* ed, const vector<string>& params);
+	static void cbDoLearned(Editor* ed, const vector<string>& params);
+	static void cbPageUp(Editor* ed, const vector<string>& params);
+	static void cbPageDown(Editor* ed, const vector<string>& params);
+	static void cbKillLine(Editor* ed, const vector<string>& params);
+	static void cbPaste(Editor* ed, const vector<string>& params);
+	static void parseError(Editor* ed, int errCode);
+	static void cbDo(Editor* ed, const vector<string>& params);
+	static void cbWriteFile(Editor* ed, const vector<string>& params);
 
 public:
-	Editor(const string& fileName);
+	Editor(const string& fileName, const string& input, const string& record, bool readOnly);
 	~Editor();
-	void edit(const string& input, const string& record);
+	void edit();
 	int getKey();
 	Buffer* getBuffer();
 	void exit();
 	void quit();
 	void insertChar();
 	void debug();
+	string getCommand();
+	void setCommand(const string& cmd);
 };
 
 

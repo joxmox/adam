@@ -19,21 +19,21 @@ using namespace std;
 int result = 0;
 vector<string> xParam;
 
-class MiniBuf {
+class TestClass {
 public:
-	MiniBuf() {}
-	static void cb1(MiniBuf* mb, const vector<string>& pv) {
+	TestClass() {}
+	static void cb1(TestClass* mb, const vector<string>& pv) {
 		xParam = pv;
 		result = 17;
 	}
-	static void cb2(MiniBuf* mb, const vector<string>& pv) {
+	static void cb2(TestClass* mb, const vector<string>& pv) {
 		result = 666;
 	}
-	static void cb3(MiniBuf* mb, const vector<string>& pv) {
+	static void cb3(TestClass* mb, const vector<string>& pv) {
 		result = 4711;
 		xParam = pv;
 	}
-	static void cb4(MiniBuf* mb, const vector<string>& pv) {
+	static void cb4(TestClass* mb, const vector<string>& pv) {
 		result = -1;
 		xParam = pv;
 	}
@@ -43,41 +43,51 @@ public:
 	string getParam(int i) {
 		return xParam[i];
 	}
+	static void errFunc(TestClass* mb, int errCode) {
+		result = errCode;
+	}
 };
 
 
 
-struct ptest : public ::testing::Test {
+struct parse_test : public ::testing::Test {
 	int result;
-	MiniBuf* buf = new MiniBuf();
-	map<string, Parse<MiniBuf>::cbFun> ct {
-		{"hej", MiniBuf::cb1},
-		{"hopp", MiniBuf::cb2},
-		{"show *", MiniBuf::cb3},
-		{"apa * *", MiniBuf::cb4},
+	TestClass* tst = new TestClass();
+	map<string, Parse<TestClass>::cbFun> ct {
+		{"hej", TestClass::cb1},
+		{"hopp", TestClass::cb2},
+		{"show *", TestClass::cb3},
+		{"apa * *", TestClass::cb4},
 	};
+	Parse<TestClass> p {tst, ct, tst->errFunc};
 };
 
-TEST_F(ptest, call_function) {
-	Parse<MiniBuf> p {ct};
-	p.decode(buf, "hej");
-	EXPECT_EQ(17, buf->getResult());
-	p.decode(buf, "hopp");
-	EXPECT_EQ(666, buf->getResult());
-	p.decode(buf, "hej");
-	EXPECT_EQ(17, buf->getResult());
+TEST_F(parse_test, call_function) {
+	p.decode("hej");
+	EXPECT_EQ(17, tst->getResult());
+	p.decode("hopp");
+	EXPECT_EQ(666, tst->getResult());
+	p.decode("hej");
+	EXPECT_EQ(17, tst->getResult());
 }
 
-TEST_F(ptest, func_params) {
-	Parse<MiniBuf> p {ct};
-	p.decode(buf, "show xyzzy");
-	EXPECT_EQ(4711, buf->getResult());
-	EXPECT_EQ("xyzzy", buf->getParam(0));
-	p.decode(buf, "apa hej hopp");
-	EXPECT_EQ(-1, buf->getResult());
-	EXPECT_EQ("hej", buf->getParam(0));
-	EXPECT_EQ("hopp", buf->getParam(1));
+TEST_F(parse_test, func_params) {
+	p.decode("show xyzzy");
+	EXPECT_EQ(4711, tst->getResult());
+	EXPECT_EQ("xyzzy", tst->getParam(0));
+	p.decode("apa hej hopp");
+	EXPECT_EQ(-1, tst->getResult());
+	EXPECT_EQ("hej", tst->getParam(0));
+	EXPECT_EQ("hopp", tst->getParam(1));
+}
 
+TEST_F(parse_test, errors) {
+	p.decode("");
+	EXPECT_EQ(1, tst->getResult());
+	p.decode("h");
+	EXPECT_EQ(2, tst->getResult());
+	p.decode("x");
+	EXPECT_EQ(3, tst->getResult());
 }
 
 

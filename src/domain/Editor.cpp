@@ -21,12 +21,14 @@
 #include "stringUtils.hpp"
 
 using namespace std;
+using namespace log4cxx;
 
 LoggerPtr Editor::logger{Logger::getLogger("Editor")};
 Parse<Editor>* Editor::parse;
 
-Editor::Editor(const string& fileName) {
-	this->fileName = fileName;
+
+Editor::Editor(const string& fileName, const string& oInput, const string& oRecord, bool oReadOnly):
+		fileName(fileName), oInput(oInput), oRecord(oRecord), oReadOnly(oReadOnly) {
 	LoggerPtr logger{Logger::getLogger("Editor")};
 	LOG4CXX_DEBUG(logger, "instance created. filename is " << fileName);
 }
@@ -93,10 +95,26 @@ void Editor::exit() {
 }
 
 void Editor::quit() {
-	loop = false;
+	bool ok = false;
+	if (!buf->isModified()) {
+		ok = true;
+		loop = false;
+	}
+	while (!ok) {
+		string ans = str::lowercase(buf->getScr()->readCommand("Buffer modifications will not be saved, continue quitting [Yes]? "));
+		if (ans == "" || ans == "y" || ans == "ye" || ans == "yes") {
+			loop = false;
+			ok = true;
+		} else if (ans == "n" || ans == "no") {
+			ok = true;
+		} else {
+			buf->getScr()->printWarning("Don't understand " + ans + "  Please answer Yes or No.");
+		}
+	}
+	buf->getScr()->printCommand("");
 }
 
-void Editor::edit(const string& input, const string& record) {
+void Editor::edit() {
 	LOG4CXX_DEBUG(logger, "starting");
 
 	initDispatch();
@@ -107,7 +125,7 @@ void Editor::edit(const string& input, const string& record) {
 	cmdWin = scr->createCmdWin();
 
 	bufName = getBufferName(fileName);
-	buf = new Buffer(bufName, fileName, scr);
+	buf = new Buffer(bufName, fileName, scr, oReadOnly);
 	bufMap[bufName] = buf;
 
 	int sts = buf->readFile();
@@ -117,13 +135,13 @@ void Editor::edit(const string& input, const string& record) {
 		LOG4CXX_DEBUG(logger, "editing new file");
 	}
 
-	if (!input.empty()) {
+	if (!oInput.empty()) {
 		LOG4CXX_DEBUG(logger, "replay option specified");
-		readReplay(input);
+		readReplay(oInput);
 	}
 
-	if (!record.empty()) {
-		recFile = record;
+	if (!oRecord.empty()) {
+		recFile = oRecord;
 		LOG4CXX_DEBUG(logger, "session input will be saved to file " << recFile);
 		recFlag = true;
 	}
@@ -142,8 +160,8 @@ void Editor::readReplay(const string& input) {
 		LOG4CXX_DEBUG(logger, "replay file version = " << version);
 		vec = str::split(version, ",");
 		int major = stoi(vec[0]);
-		int minor = 0;
-		if (vec.size() > 1) minor = stoi(vec[1]);
+//		int minor = 0;
+//		if (vec.size() > 1) minor = stoi(vec[1]);
 		switch (major) {
 		case 1:
 			readReplayVer1(ifs);
@@ -204,7 +222,7 @@ void Editor::mainLoop() {
 		}
 		if (learnFlag) learnBuf.back().push_back(key);
 		if (recFlag) recBuf.push_back(key);
-		disMap[key](this);
+		disMap[key](this, {});
 	}
 }
 
@@ -242,11 +260,15 @@ void Editor::initDispatch() {
 	setDisp("do", 276, cbDo);
 	setDisp("pgdown", 338, cbPageDown);
 	setDisp("pgup", 339, cbPageUp);
-	LOG4CXX_DEBUG(logger, "dispatch table initialized");
+	LOG4CXX_DEBUG(logger, "dispatch tables initialized");
 	map<string, Parse<Editor>::cbFun> funcTab {
-		{"learn", cmdLearn},
+		{"learn", cbStartLearn},
+		{"quit", cbQuit},
+		{"write", cbWriteFile},
+		{"write *", cbWriteFile},
 	};
-	parse = new Parse<Editor> {funcTab};
+	parse = new Parse<Editor> {this, funcTab, parseError};
+	LOG4CXX_DEBUG(logger, "dispatch tables initialized");
 }
 
 void Editor::startLearn() {
@@ -300,7 +322,7 @@ void Editor::doLearned() {
 	for (auto a : apa) {
 		LOG4CXX_DEBUG(logger, "playing back: " << a);
 		key = a;
-		disMap[a](this);
+		disMap[a](this, {});
 	}
 }
 
@@ -311,37 +333,60 @@ void Editor::debug() {
 	buf->getScr()->debug();
 }
 
-void Editor::cbIllegalChar(Editor* ed) {
+string Editor::getCommand() {
+	return command;
+}
+
+void Editor::setCommand(const string& cmd) {
+	command = cmd;
+}
+
+void Editor::cbIllegalChar(Editor* ed, const vector<string>& params) {
 	LOG4CXX_DEBUG(logger, "received unexpected character: " << ed->getKey());
 }
 
-void Editor::cbNormChar(Editor* ed) {ed->getBuffer()->insertChar(ed->getKey());}
-void Editor::cbExit(Editor* ed) {ed->exit();}
-void Editor::cbQuit(Editor* ed) {ed->quit();}
-void Editor::cbDebug(Editor* ed) {ed->debug();}
-void Editor::cbMoveUp(Editor* ed) {ed->getBuffer()->moveUp();}
-void Editor::cbMoveDown(Editor* ed) {ed->getBuffer()->moveDown();}
-void Editor::cbMoveLeft(Editor* ed) {ed->getBuffer()->moveLeft();}
-void Editor::cbMoveRight(Editor* ed) {ed->getBuffer()->moveRight();}
-void Editor::cbReturn(Editor* ed) {ed->getBuffer()->insertBreak();}
-void Editor::cbBackSpace(Editor* ed) {ed->getBuffer()->deleteChar();}
-void Editor::cbGotoSol(Editor* ed) {ed->getBuffer()->gotoSol();}
-void Editor::cbGotoEol(Editor* ed) {ed->getBuffer()->gotoEol();}
-void Editor::cbStartLearn(Editor* ed) {ed->startLearn();}
-void Editor::cbRemember(Editor* ed) {ed->remember();}
-void Editor::cbDoLearned(Editor* ed) {ed->doLearned();}
-void Editor::cbPageUp(Editor* ed) {ed->getBuffer()->pageUp();}
-void Editor::cbPageDown(Editor* ed) {ed->getBuffer()->pageDown();}
-void Editor::cbKillLine(Editor* ed) {ed->getBuffer()->killLine();}
-void Editor::cbPaste(Editor* ed) {ed->getBuffer()->paste();}
+void Editor::cbNormChar(Editor* ed, const vector<string>& params) {ed->getBuffer()->insertChar(ed->getKey());}
+void Editor::cbExit(Editor* ed, const vector<string>& params) {ed->exit();}
+void Editor::cbQuit(Editor* ed, const vector<string>& params) {ed->quit();}
+void Editor::cbDebug(Editor* ed, const vector<string>& params) {ed->debug();}
+void Editor::cbMoveUp(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveUp();}
+void Editor::cbMoveDown(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveDown();}
+void Editor::cbMoveLeft(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveLeft();}
+void Editor::cbMoveRight(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveRight();}
+void Editor::cbReturn(Editor* ed, const vector<string>& params) {ed->getBuffer()->insertBreak();}
+void Editor::cbBackSpace(Editor* ed, const vector<string>& params) {ed->getBuffer()->deleteChar();}
+void Editor::cbGotoSol(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoSol();}
+void Editor::cbGotoEol(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoEol();}
+void Editor::cbStartLearn(Editor* ed, const vector<string>& params) {ed->startLearn();}
+void Editor::cbRemember(Editor* ed, const vector<string>& params) {ed->remember();}
+void Editor::cbDoLearned(Editor* ed, const vector<string>& params) {ed->doLearned();}
+void Editor::cbPageUp(Editor* ed, const vector<string>& params) {ed->getBuffer()->pageUp();}
+void Editor::cbPageDown(Editor* ed, const vector<string>& params) {ed->getBuffer()->pageDown();}
+void Editor::cbKillLine(Editor* ed, const vector<string>& params) {ed->getBuffer()->killLine();}
+void Editor::cbPaste(Editor* ed, const vector<string>& params) {ed->getBuffer()->paste();}
 
-void Editor::cbDo(Editor* ed) {
+
+void Editor::parseError(Editor* ed, int errCode) {
+	ed->buf->commandError(ed->getCommand(), errCode);
+}
+void Editor::cbDo(Editor* ed, const vector<string>& params) {
 	string cmd = ed->getBuffer()->readCommand();
+	ed->setCommand(cmd);
 	LOG4CXX_DEBUG(logger, "got string: " << cmd);
-	parse->decode(ed, cmd);
+	parse->decode(cmd);
 }
 
-void Editor::cmdLearn(Editor* ed, const vector<string>& params) {ed->startLearn();}
+void Editor::cbWriteFile(Editor* ed, const vector<string>& params) {
+	string fileName;
+	if (params.size() < 1) {
+		fileName = ed->getBuffer()->getFileName();
+	} else {
+		fileName = params[1];
+	}
+	ed->getBuffer()->saveToFile(fileName);
+}
+
+
 
 
 

@@ -98,7 +98,11 @@ int Curse::readKey(int id) {
 string Curse::readString(int id) {
 	LOG4CXX_TRACE(logger, "enter");
 	char buff[128];
+	noraw();
+	echo();
 	wgetnstr(static_cast<WINDOW*>(winMap[id]), buff, 127);
+	raw();
+	noecho();
 	LOG4CXX_DEBUG(logger, "read string " << string(buff) << " from keyboard");
 	return string(buff);
 	LOG4CXX_TRACE(logger, "exit");

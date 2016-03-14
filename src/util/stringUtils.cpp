@@ -35,6 +35,14 @@ vector<string> match(const string& str, const string& patt) {
 	return r;
 }
 
+string lowercase(const string& str) {
+        string res {str};
+        for (auto i = 0; i < str.size(); i++) {
+        	res[i] = tolower(res[i]);
+        }
+        return res;
+}
+
 }
 
 

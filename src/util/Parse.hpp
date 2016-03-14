@@ -24,12 +24,15 @@ template<typename Object>
 class Parse {
 public:
 	using cbFun = void (*)(Object*, const vector<string>&);
+	using cbErr = void (*)(Object*, int);
 private:
+	Object* obj;
+	cbErr errFunc = nullptr;
 	LoggerPtr logger{Logger::getLogger("Parse")};
 	vector<pair<regex, cbFun>> funcArr;
 	map<string, int>parseMap;
 public:
-    Parse(const map<string, cbFun>& inTable) {
+    Parse(Object* obj, const map<string, cbFun>& inTable, cbErr errFunc): obj(obj), errFunc(errFunc) {
     	for (auto i : inTable) {
     		vector<string> refCmds = str::split(i.first, "\\s+");
     		string regStr = "^\\s*";
@@ -52,13 +55,13 @@ public:
     	}
     }
 
-    void decode(Object* obj, const string& cmd) const {
+    void decode(const string& cmd) const {
     	LOG4CXX_TRACE(logger, "enter");
     	cbFun res;
     	int cnt = 0;
     	if (regex_match(cmd, regex("^\\s*$"))) {
 			LOG4CXX_DEBUG(logger, "no command given");
-    		// callback no command;
+			errFunc(obj, 1);
     		return;
     	}
 		vector<string> params;
@@ -66,8 +69,8 @@ public:
     	for (auto p : funcArr) {
     		if (regex_match(cmd, pMatch, p.first)) {
     			if (++cnt > 1) {
-    				LOG4CXX_DEBUG(logger, "command '" << cmd << "' is amigous");
-    				// callback ambigous;
+    				LOG4CXX_DEBUG(logger, "command '" << cmd << "' is ambiguous");
+    				errFunc(obj, 2);
     				return;
     			} else {
     				res = p.second;
@@ -78,8 +81,8 @@ public:
     		}
     	}
 		if (cnt == 0) {
-			LOG4CXX_DEBUG(logger, "command '" << cmd << "' could not be parses");
-			// callback no match
+			LOG4CXX_DEBUG(logger, "command '" << cmd << "' could not be parsed");
+			errFunc(obj, 3);
 		} else {
 			LOG4CXX_DEBUG(logger, "command '" << cmd << "' is valid - dispatching");
 			res(obj, params);

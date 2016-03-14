@@ -62,34 +62,18 @@ Win* Screen::getCmdWin() {
 }
 
 void Screen::printMessage(const string& str) {
-	LOG4CXX_DEBUG(logger, "pointer to messWin: " << messWin);
-	LOG4CXX_DEBUG(logger, "starting async printMessage");
-	thread th (asyncMessage, this, str);
-	th.detach();
-}
-
-void Screen::asyncMessage(Screen* scr, const string& str) {
 	LOG4CXX_TRACE(logger, "enter");
-	lock_guard<mutex> guard(gMessage);
-	LOG4CXX_DEBUG(logger, "lock taken");
-	Win* messWin = scr->getMessWin();
-	LOG4CXX_DEBUG(logger, "pointer to messWin: " << messWin);
-	LOG4CXX_DEBUG(logger, "str: " << str);
 	messWin->pos(0, 0);
 	messWin->printStr(str);
 	messWin->pos(0, str.size());
 	messWin->clearEol();
 	messWin->refresh();
+	LOG4CXX_TRACE(logger, "exit");
 }
+
+
 
 void Screen::printWarning(const string& str) {
-	thread th {asyncWarning, this, str};
-	th.detach();
-}
-
-void Screen::asyncWarning(Screen* scr, const string& str) {
-	lock_guard<mutex> guard(gMessage);
-	Win* messWin = scr->getMessWin();
 	messWin->pos(0, 0);
 	messWin->setAttr(attRev);
 	messWin->printStr(str);
@@ -105,6 +89,7 @@ void Screen::asyncWarning(Screen* scr, const string& str) {
 	messWin->refresh();
 }
 
+
 void Screen::printCommand(const string& str) {
 	cmdWin->pos(0, 0);
 	cmdWin->printStr(str);
@@ -113,17 +98,16 @@ void Screen::printCommand(const string& str) {
 	cmdWin->refresh();
 }
 
-string Screen::readCommand() {
-	string prompt = "Command: ";
+string Screen::readCommand(const string& prm) {
 	cmdWin->pos(0, 0);
-	cmdWin->printStr(prompt);
-	cmdWin->pos(0, prompt.size());
+	cmdWin->printStr(prm);
+	cmdWin->pos(0, prm.size());
 	cmdWin->clearEol();
 	cmdWin->refresh();
 	string cmd = cmdWin->readString();
-	cmdWin->refresh();
 	return cmd;
 }
+
 
 
 void Screen::push() {

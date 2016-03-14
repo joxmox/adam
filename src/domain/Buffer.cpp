@@ -19,8 +19,13 @@ using namespace log4cxx;
 
 LoggerPtr Buffer::logger{Logger::getLogger("Buffer")};
 
-Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr): fileName(fileName), bufName(bufName), scr(scr) {
+Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr, bool readOnly):
+		bufName(bufName), fileName(fileName), scr(scr), readOnly(readOnly) {
 	LOG4CXX_DEBUG(logger, "new buffer created: " << bufName);
+	if (readOnly) {
+		stsWrite = "Read-only";
+		stsInsert = "Unmodifiable";
+	}
 }
 
 Buffer::~Buffer() {
@@ -113,9 +118,12 @@ void Buffer::adjustBuffer(int type) {
 
 void Buffer::insertChar(int key) {
 	LOG4CXX_DEBUG(logger, "inserting char: " << key);
-	adjustBuffer(1);
-	scr->insertChar(key);
-	data[row].insert(col++, string(1, key));
+	if (markModified()) {
+		LOG4CXX_DEBUG(logger, "inserting char: " << key);
+		adjustBuffer(1);
+		scr->insertChar(key);
+		data[row].insert(col++, string(1, key));
+	}
 }
 
 void Buffer::moveUp() {
@@ -166,35 +174,39 @@ void Buffer::moveRight() {
 }
 
 void Buffer::insertBreak() {
-	adjustBuffer(2);
-	string tmp = data[row].substr(col);
-	data[row].erase(col, string::npos);
-	scr->insertBreak(tmp);
-	data.insert(data.begin() + ++row, tmp);
-	col = 0;
+	if (markModified()) {
+		adjustBuffer(2);
+		string tmp = data[row].substr(col);
+		data[row].erase(col, string::npos);
+		scr->insertBreak(tmp);
+		data.insert(data.begin() + ++row, tmp);
+		col = 0;
+	}
 }
 
 
 void Buffer::deleteChar() {
 	LOG4CXX_TRACE(logger, "enter");
-	adjustBuffer(1);
-	if (col > 0) {
-		LOG4CXX_DEBUG(logger, "cursor in the wild - remove single char");
-		data[row].erase(--col, 1);
-		scr->delChar();
-	} else {
-		LOG4CXX_DEBUG(logger, "cursor at leftmost position - join lines");
-		if (row > 0) {
-			string s;
-			int p = row + scr->getHeight() - scr->getRow();
-			if (p < data.size()) s = data[p];
-			scr->deleteBreak(s, data[row], data[row - 1]);
-			col = data[row - 1].size();
-			data[row - 1] += data[row];
-			data.erase(data.begin() + row--);
+	if (markModified()) {
+		adjustBuffer(1);
+		if (col > 0) {
+			LOG4CXX_DEBUG(logger, "cursor in the wild - remove single char");
+			data[row].erase(--col, 1);
+			scr->delChar();
+		} else {
+			LOG4CXX_DEBUG(logger, "cursor at leftmost position - join lines");
+			if (row > 0) {
+				string s;
+				int p = row + scr->getHeight() - scr->getRow();
+				if (p < data.size()) s = data[p];
+				scr->deleteBreak(s, data[row], data[row - 1]);
+				col = data[row - 1].size();
+				data[row - 1] += data[row];
+				data.erase(data.begin() + row--);
+			}
 		}
-		LOG4CXX_TRACE(logger, "exit");
 	}
+	LOG4CXX_TRACE(logger, "exit");
 }
 
 void Buffer::gotoSol() {
@@ -309,34 +321,40 @@ void Buffer::pop() {
 
 void Buffer::killLine() {
 	if (!atBotRow()) {
-		string s;
-		int p = row + scr->getHeight() - scr->getRow();
-		if (p < data.size()) s = data[p];
-		scr->delLine(s);
-		if (firstKill) {
-			LOG4CXX_DEBUG(logger, "this is first kill - clearing paste buffer");
-			pasteBuf.clear();
-			firstKill = false;
-		} else {
-			LOG4CXX_DEBUG(logger, "this is not first kill - keeping paste buffer intact");
+		if (markModified()) {
+			string s;
+			int p = row + scr->getHeight() - scr->getRow();
+			if (p < data.size()) s = data[p];
+			scr->delLine(s);
+			if (firstKill) {
+				LOG4CXX_DEBUG(logger, "this is first kill - clearing paste buffer");
+				pasteBuf.clear();
+				firstKill = false;
+			} else {
+				LOG4CXX_DEBUG(logger, "this is not first kill - keeping paste buffer intact");
+			}
+			pasteBuf.push_back(data[row]);
+			data.erase(data.begin() + row);
 		}
-		pasteBuf.push_back(data[row]);
-		data.erase(data.begin() + row);
 	}
 }
 
 void Buffer::paste() {
-	for (auto p : pasteBuf) {
-		LOG4CXX_DEBUG(logger, "pasting: " << p);
-		insertLine(p);
-		firstKill = true;
+	if (!pasteBuf.empty() && markModified()) {
+		for (auto p : pasteBuf) {
+			LOG4CXX_DEBUG(logger, "pasting: " << p);
+			insertLine(p);
+			firstKill = true;
+		}
 	}
 }
 
 void Buffer::insertLine(const string& s) {
-	scr->insertLine(s);
-	data.insert(data.begin() + row, s);
-	moveDown();
+	if (markModified()) {
+		scr->insertLine(s);
+		data.insert(data.begin() + row, s);
+		moveDown();
+	}
 }
 
 void Buffer::saveToFile(const string& fileName) {
@@ -347,12 +365,52 @@ void Buffer::saveToFile(const string& fileName) {
 	}
 	string tmp = data.back();
 	data.pop_back();
+	int count = 0;
 	for (auto d : data) {
 		of << d << endl;
+		count++;
 	}
 	data.push_back(tmp);
+	string lines = "lines";
+	if (count == 1) lines = "line";
+	scr->printMessage(to_string(count) + " " + lines + " written to file " + fileName);
 }
 
 string Buffer::readCommand() {
 	return scr->readCommand();
+}
+
+void Buffer::commandError(const string& cmd, int errCode) {
+	switch(errCode) {
+	case 1:
+		scr->printWarning("No command given.");
+		break;
+	case 2:
+		scr->printWarning("Ambiguous command name: " + cmd);
+		break;
+	case 3:
+		scr->printWarning("Don't understand command: " + cmd);
+		break;
+	default:
+		scr->printWarning("ERROR: unexpected error code received from Parse");
+
+	}
+}
+
+bool Buffer::isModified() {
+	return modified;
+}
+
+
+string Buffer::getFileName() {
+	return fileName;
+}
+
+bool Buffer::markModified() {
+	if (readOnly) {
+		scr->printWarning("Attempt to change unmodifiable buffer " + bufName);
+	} else {
+		modified = true;
+	}
+	return (!readOnly);
 }

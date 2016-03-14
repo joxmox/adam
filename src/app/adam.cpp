@@ -26,6 +26,7 @@ int main(int argc, char* argv[]) {
 	vector<string> params;
 	string input;
 	string record;
+	bool readOnly = false;
 	for (int k = 1; k < argc; ++k) {
 		string arg = argv[k];
 		if (arg[0] == '-') {
@@ -35,6 +36,9 @@ int main(int argc, char* argv[]) {
 			} else if (arg == "--record" || arg == "-r") {
 				LOG4CXX_DEBUG(logger, "option record: " << argv[++k]);
 				record = argv[k];
+			} else if (arg == "--readonly" || arg == "-o") {
+				LOG4CXX_DEBUG(logger, "option readonly set: ");
+				readOnly = true;
 			} else {
 				cerr << argv[0] << "Invalid option -- " << arg << endl << usage << endl;
 				return 1;
@@ -55,9 +59,9 @@ int main(int argc, char* argv[]) {
 
     LOG4CXX_DEBUG(logger, "command line ok. filename is " << fileName);
 
-    Editor ed {fileName};
+    Editor ed {fileName, input, record, readOnly};
     LOG4CXX_DEBUG(logger, "editor instance created - starting editing");
-    ed.edit(input, record);
+    ed.edit();
     LOG4CXX_DEBUG(logger, "editor session ended");
 }
 

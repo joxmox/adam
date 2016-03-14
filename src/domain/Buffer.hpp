@@ -24,15 +24,17 @@ public:
 private:
 	int row = 0;
 	int col = 0;
+	string bufName;
+	string fileName;
+	Screen* scr;
+	bool readOnly = false;
+	bool modified = false;
 	vector<pair<int, int>> posStack;
 	string stsWrite = "Write";
 	string stsInsert = "Insert";
 	string stsDirection = "Forward";
-	string fileName;
-	string bufName;
 	vector<string> data = {{eobStr}};
 	bool selectActive = false;
-	Screen* scr;
 	vector<string> pasteBuf;
 	bool firstKill = true;
 	static log4cxx::LoggerPtr logger;
@@ -43,15 +45,17 @@ private:
 	void updateStatus();
 	void printMessage(const string& str);
 	void adjustBuffer(int type);
+	bool markModified();
 
 public:
-	Buffer(const string& bufName, const string& fileName = "", Screen* scr = nullptr);
+	Buffer(const string& bufName, const string& fileName = "", Screen* scr = nullptr , bool readOnly = false);
 	~Buffer();
 	int readFile(const string& fileName = "");
 	bool fileExists();
 	bool atTopRow();
 	bool atBotRow();
 	int getLines();
+	string getFileName();
 	void insertChar(int key);
 	void dump();
 	void setFocus();
@@ -74,5 +78,7 @@ public:
 	void insertLine(const string& s);
 	void saveToFile(const string& fileName);
 	string readCommand();
+	void commandError(const string& cmd, int errCode);
+	bool isModified();
 };
 

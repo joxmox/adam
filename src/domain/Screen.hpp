@@ -25,8 +25,6 @@ class Screen : public Win {
 	vector<pair<int, int>> posStack;
 	static log4cxx::LoggerPtr logger;
 	static mutex gMessage;
-	static void asyncWarning(Screen* scr, const string& str);
-	static void asyncMessage(Screen* scr, const string& str);
 	Win* getMessWin();
 	Win* getCmdWin();
 public:
@@ -38,7 +36,7 @@ public:
 	void printMessage(const string& str);
 	void printWarning(const string& str);
 	void printCommand(const string& str);
-	string readCommand();
+	string readCommand(const string& prm = "Command: ");
 
 	void push();
 	void push(int r, int c);
