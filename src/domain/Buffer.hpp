@@ -27,6 +27,7 @@ private:
 	string bufName;
 	string fileName;
 	Screen* scr;
+	unordered_map<string, pair<int, int>> markMap;
 	bool readOnly = false;
 	bool modified = false;
 	vector<pair<int, int>> posStack;
@@ -85,5 +86,8 @@ public:
 	void gotoLine(const string& line);
 	void gotoMark(const string& mark);
 	void setMark(const string& mark);
+	void debug();
+	void where();
+	void gotoExtreme(int x);
 };
 

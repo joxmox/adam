@@ -424,8 +424,8 @@ void Buffer::gotoRel(int toMove) {
 	int maxScreen = scr->getHeight() - 1;
 	int newRow;
 	if (toMove < 0) {
-		int topRow = row - screenRow - toMove;
-		newRow = row - toMove;
+		int topRow = row - screenRow + toMove;
+		newRow = row + toMove;
 		if (topRow < 0) {
 			screenRow += topRow;
 		}
@@ -472,10 +472,32 @@ void Buffer::gotoLine(const string& line) {
 }
 
 void Buffer::gotoMark(const string& mark) {
-
+	pair<int, int> p = markMap[mark];
+	row = p.first;
+	gotoAbs(row);
+	col = p.second;
+	scr->setCol(col);
 }
 
 
 void Buffer::setMark(const string& mark) {
+	markMap[mark] = {row, col};
+}
 
+void Buffer::debug() {
+	LOG4CXX_DEBUG(logger, "position = " << row << "," << col);
+}
+
+void Buffer::where() {
+	scr->printMessage("This is buffer line " + to_string(row) + ".");
+}
+
+void Buffer::gotoExtreme(int x) {
+	if (x < 0) {
+		gotoAbs(0);
+	} else {
+		gotoAbs(data.size() -1);
+	}
+	col= 0;
+	scr->setCol(0);
 }

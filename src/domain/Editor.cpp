@@ -216,6 +216,7 @@ void Editor::mainLoop() {
 			if (inKeys.empty()) LOG4CXX_DEBUG(logger, "input file processed  reverting to keyboard");
 		} else  {
 			LOG4CXX_TRACE(logger, "waiting for key from terminal");
+			buf->debug();
 			buf->getScr()->debug();
 			key = buf->getScr()->readKey();
 			LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
@@ -269,6 +270,10 @@ void Editor::initDispatch() {
 		{"line *", cbGotoLine},
 		{"goto *", cbGotoMark},
 		{"mark *", cbSetMark},
+		{"line", cbWhere},
+		{"where", cbWhere},
+		{"top", cbGotoTop},
+		{"bottom", cbGotoBot},
 	};
 	parse = new Parse<Editor> {this, funcTab, parseError};
 	LOG4CXX_DEBUG(logger, "dispatch tables initialized");
@@ -393,7 +398,10 @@ void Editor::cbGotoLine(Editor* ed, const vector<string>& params) {ed->getBuffer
 void Editor::cbGotoMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoMark(params[0]);}
 void Editor::cbSetMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->setMark(params[0]);}
 
+void Editor::cbWhere(Editor* ed, const vector<string>& params) {ed->getBuffer()->where();}
 
+void Editor::cbGotoTop(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoExtreme(-1);};
+void Editor::cbGotoBot(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoExtreme(1);};
 
 
 

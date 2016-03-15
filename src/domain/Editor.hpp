@@ -95,6 +95,9 @@ class Editor {
 	static void cbGotoLine(Editor* ed, const vector<string>& params);
 	static void cbGotoMark(Editor* ed, const vector<string>& params);
 	static void cbSetMark(Editor* ed, const vector<string>& params);
+	static void cbWhere(Editor* ed, const vector<string>& params);
+	static void cbGotoTop(Editor* ed, const vector<string>& params);
+	static void cbGotoBot(Editor* ed, const vector<string>& params);
 
 public:
 	Editor(const string& fileName, const string& input, const string& record, bool readOnly);
