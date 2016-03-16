@@ -50,34 +50,29 @@ void Editor::saveRecord() {
 	if (!ofs) throw runtime_error("could not open " + recFile + " for output");
 	ofs << "version(" << RECORD_VERSION << ")" << endl;
 	vector<int>::iterator it = recBuf.begin();
+	string txt;
 	while (it < recBuf.end()) {
-		string txt = "string(\"";
 		if (*it >= 32 && *it <= 126) {
-			if (*it == '"' || *it == '\\') txt.append("\\");
-			txt.append(1, *it);
-			while (it + 1 != recBuf.end() && ((*(it + 1) >= 32 && *(it + 1) <= 126) || *(it + 1) == 13)) {
-				it++;
-				if (*it == '"' || *it == '\\' || *it == 13) txt.append("\\");
-				if (*it == 13) *it = 'n';
-				txt.append(1, *it);
+			if (*it == '(' || *it == ')' || *it == '\\') txt.push_back('\\');
+			txt = "text(" + string(1, *it++);
+			while (it != recBuf.end() && *it >= 32 && *it  <= 126) {
+				if (*it == '(' || *it == '\\' || *it == ')') txt.push_back('\\');
+				txt.push_back(*it++);
 			}
-			txt += "\")";
+			txt.push_back(')');
 		} else {
-			int key = *it;
+			int key = *it++;
 			txt = func2name[key];
 			int count = 1;
-			while (it + 1 != recBuf.end() && *(it + 1) == key) {
+			while (it != recBuf.end() && *it == key) {
 				count++;
 				it++;
 			}
 			if (count > 1) {
 				txt += "(" + to_string(count) + ")";
-			} else {
-				txt += "()";
 			}
 		}
 		ofs << txt << endl;
-		it++;
 	}
 }
 
@@ -158,8 +153,10 @@ void Editor::readReplay(const string& input) {
 		if (vec.size() != 3 || vec[1] != "version") throw logic_error("invalid header record in replay file - " + line);
 		string version = vec[2];
 		LOG4CXX_DEBUG(logger, "replay file version = " << version);
-		vec = str::split(version, ",");
+		vec = str::split(version, "\\.");
+		LOG4CXX_DEBUG(logger, vec[0]);
 		int major = stoi(vec[0]);
+		LOG4CXX_DEBUG(logger, "stoi done");
 //		int minor = 0;
 //		if (vec.size() > 1) minor = stoi(vec[1]);
 		switch (major) {
@@ -177,10 +174,14 @@ void Editor::readReplayVer1(istream& ifs) {
 	while (getline(ifs, line)) {
 		if (!line.empty()) {
 			if (line.back() != ')') line.append("()");
-			vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
+			vector<string> vec = str::match(line, R"(^(.*?)\((.*?)\)$)");
 			if (vec.size() != 3) throw logic_error("cannot parse replay file - " + line);
+			LOG4CXX_DEBUG(logger, vec[0]);
+			LOG4CXX_DEBUG(logger, vec[1]);
+			LOG4CXX_DEBUG(logger, vec[2]);
+
 			string func {vec[1]};
-			if (func == "string") {
+			if (func == "text") {
 				string::iterator it {vec[2].begin()};
 				while (it != vec[2].end()) {
 					if (*it == '\\') it++;
@@ -192,7 +193,8 @@ void Editor::readReplayVer1(istream& ifs) {
 				if (vec[2].empty()) {
 					cnt = 1;
 				} else {
-				  cnt = stoi(vec[2]);
+					LOG4CXX_DEBUG(logger, vec[2]);
+					cnt = stoi(vec[2]);
 				}
 				for (int i = 0; i < cnt; i++) inKeys.push_back(key);
 			}

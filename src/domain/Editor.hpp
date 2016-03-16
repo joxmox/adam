@@ -31,7 +31,7 @@ using funcFun = void (*)(Editor*, const vector<string>&);
 using funcVec = vector<funcFun>;
 
 class Editor {
-	const string RECORD_VERSION = "1,1";
+	const string RECORD_VERSION = "1.1";
 	Curse* tty = nullptr;
 	Win* cmdWin = nullptr;
 	Win* messWin = nullptr;

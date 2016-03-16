@@ -473,6 +473,7 @@ void Buffer::gotoLine(const string& line) {
 
 void Buffer::gotoMark(const string& mark) {
 	pair<int, int> p = markMap[mark];
+	LOG4CXX_DEBUG(logger, "mark" + mark + ", position " + to_string(p.first) + "," + to_string(p.second));
 	row = p.first;
 	gotoAbs(row);
 	col = p.second;
@@ -482,6 +483,7 @@ void Buffer::gotoMark(const string& mark) {
 
 void Buffer::setMark(const string& mark) {
 	markMap[mark] = {row, col};
+	scr->printMessage("Current position marked as: " + mark);
 }
 
 void Buffer::debug() {
@@ -489,7 +491,7 @@ void Buffer::debug() {
 }
 
 void Buffer::where() {
-	scr->printMessage("This is buffer line " + to_string(row) + ".");
+	scr->printMessage("You are at line " + to_string(row + 1) + " in buffer " + bufName + ".");
 }
 
 void Buffer::gotoExtreme(int x) {
