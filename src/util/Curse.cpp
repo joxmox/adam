@@ -80,6 +80,15 @@ void Curse::delWin(int id) {
 	}
 }
 
+void Curse::delWinAll() {
+	for (auto& w : winMap) {
+		if (w) {
+		    delwin(static_cast<WINDOW*>(w));
+		    w = nullptr;
+		}
+	}
+}
+
 
 
 int Curse::getWidth() {

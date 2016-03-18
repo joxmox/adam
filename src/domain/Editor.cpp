@@ -19,6 +19,7 @@
 #include "Editor.hpp"
 #include "Screen.hpp"
 #include "stringUtils.hpp"
+#include "cbFuncs.hpp"
 
 using namespace std;
 using namespace log4cxx;
@@ -39,15 +40,15 @@ Editor::~Editor() {
 		LOG4CXX_DEBUG(logger, "saving record buffer");
 		saveRecord();
 	}
-	delete buf;
-	delete cmdWin;
-	delete messWin;
+	if (buf) delete buf;
+	if (cmdWin) delete cmdWin;
+	if (messWin) delete messWin;
 	if (tty != nullptr) delete tty;
 }
 
 void Editor::saveRecord() {
 	ofstream ofs {recFile};
-	if (!ofs) throw runtime_error("could not open " + recFile + " for output");
+	if (!ofs) abort("could not open recording file" + recFile + " for output");
 	ofs << "version(" << RECORD_VERSION << ")" << endl;
 	vector<int>::iterator it = recBuf.begin();
 	string txt;
@@ -146,11 +147,11 @@ void Editor::edit() {
 void Editor::readReplay(const string& input) {
 	LOG4CXX_DEBUG(logger, "reading simulated keys from file " << input);
 	ifstream ifs {input};
-	if (!ifs) throw invalid_argument("cannot open replay file " + input);
+	if (!ifs) abort("cannot open replay file " + input + " for input");
 	string line;
 	if (getline(ifs, line)) {
 		vector<string> vec = str::match(line, R"(^(.*?)\(\"?(.*?)\"?\)$)");
-		if (vec.size() != 3 || vec[1] != "version") throw logic_error("invalid header record in replay file - " + line);
+		if (vec.size() != 3 || vec[1] != "version") abort("invalid header record in replay file - " + line);
 		string version = vec[2];
 		LOG4CXX_DEBUG(logger, "replay file version = " << version);
 		vec = str::split(version, "\\.");
@@ -164,7 +165,7 @@ void Editor::readReplay(const string& input) {
 			readReplayVer1(ifs);
 			break;
 		default:
-			throw logic_error("unsupported replay file version - " + version);
+			abort("unsupported replay file version - " + version);
 		}
 	}
 }
@@ -172,31 +173,44 @@ void Editor::readReplay(const string& input) {
 void Editor::readReplayVer1(istream& ifs) {
 	string line;
 	while (getline(ifs, line)) {
-		if (!line.empty()) {
-			if (line.back() != ')') line.append("()");
-			vector<string> vec = str::match(line, R"(^(.*?)\((.*?)\)$)");
-			if (vec.size() != 3) throw logic_error("cannot parse replay file - " + line);
-			LOG4CXX_DEBUG(logger, vec[0]);
-			LOG4CXX_DEBUG(logger, vec[1]);
-			LOG4CXX_DEBUG(logger, vec[2]);
+		line = str::decomment(line, '#', '(');
+		vector<string> lines {str::split(line, ";")};
+		for (auto line : lines) {
+			line = str::trim(line);
+			if (!line.empty()) {
+				if (line.back() != ')') line.append("()");
+				vector<string> vec = str::match(line, R"(^\s*(.*?)\((.*?)\)\s*$)");
+				if (vec.size() != 3) abort("cannot parse replay line in replay file - " + line);
+				LOG4CXX_DEBUG(logger, vec[0]);
+				LOG4CXX_DEBUG(logger, vec[1]);
+				LOG4CXX_DEBUG(logger, vec[2]);
 
-			string func {vec[1]};
-			if (func == "text") {
-				string::iterator it {vec[2].begin()};
-				while (it != vec[2].end()) {
-					if (*it == '\\') it++;
-					inKeys.push_back(*(it++));
-				}
-			} else {
-				int cnt;
-				int key = name2func[func];
-				if (vec[2].empty()) {
-					cnt = 1;
+				string func {vec[1]};
+				if (func == "text") {
+					string::iterator it {vec[2].begin()};
+					while (it != vec[2].end()) {
+						if (*it == '\\') it++;
+						inKeys.push_back(*(it++));
+					}
 				} else {
-					LOG4CXX_DEBUG(logger, vec[2]);
-					cnt = stoi(vec[2]);
+					int cnt;
+					if (name2func.find(func) == name2func.end()) {
+						LOG4CXX_ERROR(logger, "no function matches " << func);
+						abort("invalid function name in replay file encountered - " + func);
+					}
+					int key = name2func[func];
+					if (vec[2].empty()) {
+						cnt = 1;
+					} else {
+						LOG4CXX_DEBUG(logger, vec[2]);
+						try {
+						cnt = stoi(vec[2]);
+						} catch (invalid_argument& e) {
+							abort("function " + func + " expects and integer argument");
+						}
+					}
+					for (int i = 0; i < cnt; i++) inKeys.push_back(key);
 				}
-				for (int i = 0; i < cnt; i++) inKeys.push_back(key);
 			}
 		}
 	}
@@ -211,7 +225,7 @@ void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
 		if (!inKeys.empty()) {
-			this_thread::sleep_for(chrono::milliseconds(25)); //TODO: Just for cosmetic reasons right now ;)
+//			this_thread::sleep_for(chrono::milliseconds(20)); //TODO: Just for cosmetic reasons right now ;)
 			key = inKeys.front();
 			inKeys.erase(inKeys.begin());
 			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");
@@ -249,17 +263,17 @@ void Editor::initDispatch() {
 	setDisp("sol", 8, cbGotoSol);
 	setDisp("kill", 11, cbKillLine);
 	setDisp("learn", 12, cbStartLearn);
-	setDisp("cr", 13, cbReturn);
-	setDisp("pasteBuffer", 16, cbPaste);
+	setDisp("cr", 13, cbInsertBreak);
+	setDisp("insert", 16, cbInsert);
 	setDisp("remember", 18, cbRemember);
 	setDisp("quit", 24, cbQuit);
 	setDisp("exit", 26, cbExit);
-	setDisp("char", 32, 126, cbNormChar);
+	setDisp("char", 32, 126, cbNormalChar);
 	setDisp("down", 258, cbMoveDown);
 	setDisp("up", 259, cbMoveUp);
 	setDisp("left", 260, cbMoveLeft);
 	setDisp("right", 261, cbMoveRight);
-	setDisp("delete", 263, cbBackSpace);
+	setDisp("del", 263, cbBackSpace);
 	setDisp("do", 276, cbDo);
 	setDisp("pgdown", 338, cbPageDown);
 	setDisp("pgup", 339, cbPageUp);
@@ -277,7 +291,7 @@ void Editor::initDispatch() {
 		{"top", cbGotoTop},
 		{"bottom", cbGotoBot},
 	};
-	parse = new Parse<Editor> {this, funcTab, parseError};
+	parse = new Parse<Editor> {this, funcTab, cbParseError};
 	LOG4CXX_DEBUG(logger, "dispatch tables initialized");
 }
 
@@ -351,59 +365,106 @@ void Editor::setCommand(const string& cmd) {
 	command = cmd;
 }
 
-void Editor::cbIllegalChar(Editor* ed, const vector<string>& params) {
-	LOG4CXX_DEBUG(logger, "received unexpected character: " << ed->getKey());
+void Editor::illegalChar() {
+	LOG4CXX_DEBUG(logger, "received unexpected character: " << key);
 }
 
-void Editor::cbNormChar(Editor* ed, const vector<string>& params) {ed->getBuffer()->insertChar(ed->getKey());}
-void Editor::cbExit(Editor* ed, const vector<string>& params) {ed->exit();}
-void Editor::cbQuit(Editor* ed, const vector<string>& params) {ed->quit();}
-void Editor::cbDebug(Editor* ed, const vector<string>& params) {ed->debug();}
-void Editor::cbMoveUp(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveUp();}
-void Editor::cbMoveDown(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveDown();}
-void Editor::cbMoveLeft(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveLeft();}
-void Editor::cbMoveRight(Editor* ed, const vector<string>& params) {ed->getBuffer()->moveRight();}
-void Editor::cbReturn(Editor* ed, const vector<string>& params) {ed->getBuffer()->insertBreak();}
-void Editor::cbBackSpace(Editor* ed, const vector<string>& params) {ed->getBuffer()->deleteChar();}
-void Editor::cbGotoSol(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoSol();}
-void Editor::cbGotoEol(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoEol();}
-void Editor::cbStartLearn(Editor* ed, const vector<string>& params) {ed->startLearn();}
-void Editor::cbRemember(Editor* ed, const vector<string>& params) {ed->remember();}
-void Editor::cbDoLearned(Editor* ed, const vector<string>& params) {ed->doLearned();}
-void Editor::cbPageUp(Editor* ed, const vector<string>& params) {ed->getBuffer()->pageUp();}
-void Editor::cbPageDown(Editor* ed, const vector<string>& params) {ed->getBuffer()->pageDown();}
-void Editor::cbKillLine(Editor* ed, const vector<string>& params) {ed->getBuffer()->killLine();}
-void Editor::cbPaste(Editor* ed, const vector<string>& params) {ed->getBuffer()->paste();}
-
-
-void Editor::parseError(Editor* ed, int errCode) {
-	ed->buf->commandError(ed->getCommand(), errCode);
-}
-void Editor::cbDo(Editor* ed, const vector<string>& params) {
-	string cmd = ed->getBuffer()->readCommand();
-	ed->setCommand(cmd);
-	LOG4CXX_DEBUG(logger, "got string: " << cmd);
-	parse->decode(cmd);
+void Editor::normalChar() {
+	buf->insertChar(key);
 }
 
-void Editor::cbWriteFile(Editor* ed, const vector<string>& params) {
-	string fileName;
-	if (params.size() < 1) {
-		fileName = ed->getBuffer()->getFileName();
+void Editor::moveUp() {
+	buf->moveUp();
+}
+
+void Editor::moveDown() {
+	buf->moveDown();
+}
+
+void Editor::moveLeft() {
+	buf->moveLeft();
+}
+
+void Editor::moveRight() {
+	buf->moveRight();
+}
+
+void Editor::insertBreak() {
+	buf->insertBreak();
+}
+
+void Editor::backSpace() {
+	buf->deleteChar();
+}
+
+void Editor::gotoSol() {
+	buf->gotoSol();
+}
+
+void Editor::gotoEol() {
+	buf->gotoEol();
+}
+
+void Editor::pageUp() {
+	buf->pageUp();
+}
+
+void Editor::pageDown() {
+	buf->pageDown();
+}
+
+void Editor::killLine() {
+	buf->killLine();
+}
+
+void Editor::insert() {
+	buf->paste();
+}
+
+void Editor::parseError(int errCode) {
+	buf->commandError(command, errCode);
+}
+void Editor::doCommand() {
+	command = buf->readCommand();
+	parse->decode(command);
+}
+
+void Editor::writeFile(const vector<string>& params) {
+	string fn;
+	if (params.empty()) {
+		fn = fileName;
 	} else {
-		fileName = params[1];
+		fn = params[0];
 	}
-	ed->getBuffer()->saveToFile(fileName);
+	buf->saveToFile(fn);
 }
 
-void Editor::cbGotoLine(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoLine(params[0]);}
-void Editor::cbGotoMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoMark(params[0]);}
-void Editor::cbSetMark(Editor* ed, const vector<string>& params) {ed->getBuffer()->setMark(params[0]);}
+void Editor::gotoLine(const string& line) {
+	buf->gotoLine(line);
+}
 
-void Editor::cbWhere(Editor* ed, const vector<string>& params) {ed->getBuffer()->where();}
+void Editor::gotoMark(const string& mark) {
+	buf->gotoMark(mark);
+}
 
-void Editor::cbGotoTop(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoExtreme(-1);};
-void Editor::cbGotoBot(Editor* ed, const vector<string>& params) {ed->getBuffer()->gotoExtreme(1);};
+void Editor::setMark(const string& mark) {
+	buf->setMark(mark);}
 
+void Editor::where() {
+	buf->where();
+}
 
+void Editor::gotoTop() {
+	buf->gotoExtreme(-1);
+}
 
+void Editor::gotoBot() {
+	buf->gotoExtreme(1);
+}
+
+void Editor::abort(const string& str) {
+	tty->delWinAll();
+	delete tty;
+	tty = nullptr;
+	throw logic_error(str);
+}

@@ -56,6 +56,7 @@ public:
 	 * @param id Window identification
 	 */
 	void delWin(int id);
+	void delWinAll();
 	void pos(int id, int row, int col);
 	void insertChar(int id, char c);
 	void printStr(int id, const string& s);

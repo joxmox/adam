@@ -160,16 +160,14 @@ $(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp
 test_compile : lib $(bin)unitTest
 
 test_run : 
-	gnome-terminal -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml ; exec bash\""
+	gnome-terminal --disable-factory -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml ; sleep 2\"" 2> /dev/null
 
 test_report :
 	groovy $(cfg)test-report.groovy -dir=$(docTst) < $(docTst)gtest-results.xml 2> /dev/null
 
 
 test_show : 
-	@if [ -e $(docTst)index.html ]; then \
-		$(web) $(doc)test/index.html &  \
-	fi
+	$(web) $(doc)test/index.html 2>/dev/null&
 
 
 $(bin)unitTest : $(tstObjs) $(objLib)stringUtils.o $(objLib)Curse.o $(objLib)Screen.o $(objLib)Buffer.o $(objLib)Editor.o

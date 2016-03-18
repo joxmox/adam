@@ -16,26 +16,41 @@
 using namespace std;
 using namespace log4cxx;
 
+const string usage = " <file name> [--replay <filename>] [--record <filename>]";
+
 LoggerPtr logger{Logger::getLogger("adam")};
+
+void printUsage(char* argv[]) {
+	cerr << "usage: " << argv[0] << usage << endl;
+}
+
+string getArg(int argc, char* argv[], int& k, const string& opt) {
+	LOG4CXX_DEBUG(logger, "getting value for option " << opt);
+	if (++k >= argc) {
+		string error = "Failed to parse arguments: Missing argument for " + string(argv[k - 1]);
+		cerr << error << endl;
+		printUsage(argv);
+		throw invalid_argument(error);
+	}
+	return argv[k];
+}
 
 int main(int argc, char* argv[]) {
     PropertyConfigurator::configure("conf/log4cxx.conf");
 	LOG4CXX_DEBUG(logger, "adam starting");
-	string usage = "usage: " + string(argv[0]) + " <file name> [--replay <filename>] [--record <filename>]";
 
 	vector<string> params;
 	string input;
 	string record;
 	bool readOnly = false;
+	try {
 	for (int k = 1; k < argc; ++k) {
 		string arg = argv[k];
 		if (arg[0] == '-') {
 			if (arg == "--replay" || arg == "-p") {
-				LOG4CXX_DEBUG(logger, "option replay: " << argv[++k]);
-				input = argv[k];
+				input = getArg(argc, argv, k, "-p");
 			} else if (arg == "--record" || arg == "-r") {
-				LOG4CXX_DEBUG(logger, "option record: " << argv[++k]);
-				record = argv[k];
+				record = getArg(argc, argv, k, "-r");
 			} else if (arg == "--readonly" || arg == "-o") {
 				LOG4CXX_DEBUG(logger, "option readonly set: ");
 				readOnly = true;
@@ -47,6 +62,9 @@ int main(int argc, char* argv[]) {
 			params.push_back(arg);
 		}
 
+	}
+	} catch (invalid_argument& e) {
+		return 1;
 	}
 
 	string fileName;

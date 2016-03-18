@@ -43,6 +43,51 @@ string lowercase(const string& str) {
         return res;
 }
 
+string decomment(const string& str, char comChr, char startQuote) {
+	string res;
+	char endQuote = startQuote;
+	switch (startQuote) {
+		case '(': endQuote = ')'; break;
+		case '[': endQuote = ']'; break;
+		case '{': endQuote = '}'; break;
+	}
+	bool inQuote = false;
+	for (auto c : str) {
+		if (c == comChr && !inQuote) {
+			break;
+		} else {
+			if (c == startQuote) {
+				inQuote = true;
+			} else if (c == endQuote) {
+				inQuote = false;
+			}
+			res += c;
+		}
+	}
+	return res;
+}
+
+
+string trimRight(const string& str) {
+	string res {str};
+	auto pos = res.size();
+	while (res.size() > 0 && (res[pos - 1] == ' ' || res[pos - 1] == '\t')) pos--;
+	if (pos != res.size()) res = str.substr(0, pos);
+	return res;
+}
+
+string trimLeft(const string& str) {
+	string res {str};
+	auto pos = -1;
+	while (res.size() > 0 && (res[pos + 1] == ' ' || res[pos - 1] == '\t')) pos++;
+	if (pos != -1) res = str.substr(pos + 1, str.size() - pos - 1);
+	return res;
+}
+
+string trim(const string& str) {
+	return trimLeft(trimRight(str));
+}
+
 }
 
 

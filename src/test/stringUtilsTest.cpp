@@ -37,6 +37,29 @@ TEST(split, multi_char) {
 	EXPECT_EQ("spaces", result[1]);
 }
 
+TEST(trim, left) {
+	EXPECT_EQ("kalle anka", str::trimLeft("kalle anka"));
+	EXPECT_EQ("kalle anka", str::trimLeft(" kalle anka"));
+	EXPECT_EQ("kalle anka", str::trimLeft("   kalle anka"));
+	EXPECT_EQ("kalle anka  ", str::trimLeft("  kalle anka  "));
+}
+
+TEST(trim, right) {
+	EXPECT_EQ("kalle anka", str::trimRight("kalle anka"));
+	EXPECT_EQ("kalle anka", str::trimRight("kalle anka "));
+	EXPECT_EQ("kalle anka", str::trimRight("kalle anka   "));
+	EXPECT_EQ("  kalle anka", str::trimRight("  kalle anka  "));
+}
+
+TEST(trim, both) {
+	EXPECT_EQ("a", "a");
+	EXPECT_EQ("kalle anka", str::trim("kalle anka"));
+	EXPECT_EQ("kalle anka", str::trim("   kalle anka"));
+	EXPECT_EQ("kalle anka", str::trim("kalle anka   "));
+	EXPECT_EQ("kalle anka", str::trim("  kalle anka  "));
+	EXPECT_EQ("kalle   anka", str::trim("  kalle   anka  "));
+}
+
 TEST(match, basic) {
 	string str {"sune=(17)"};
 	string patt = R"((.*)=\((.*)\))";
