@@ -16,3 +16,4 @@ CMakeLists.txt
 *settings.xml
 .settings/
 *.ptp-sync*
+j/*
