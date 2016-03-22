@@ -28,8 +28,7 @@ LoggerPtr Editor::logger{Logger::getLogger("Editor")};
 Parse<Editor>* Editor::parse;
 
 
-Editor::Editor(const string& fileName, const string& oInput, const string& oRecord, bool oReadOnly):
-		fileName(fileName), oInput(oInput), oRecord(oRecord), oReadOnly(oReadOnly) {
+Editor::Editor(const string& fileName): fileName(fileName) {
 	LoggerPtr logger{Logger::getLogger("Editor")};
 	LOG4CXX_DEBUG(logger, "instance created. filename is " << fileName);
 }
@@ -44,6 +43,22 @@ Editor::~Editor() {
 	if (cmdWin) delete cmdWin;
 	if (messWin) delete messWin;
 	if (tty != nullptr) delete tty;
+}
+
+void Editor::setReplay(const string &input) {
+	oInput = input;
+}
+
+void Editor::setRecord(const string &record) {
+	oRecord = record;
+}
+
+void Editor::setReadOnly() {
+	oReadOnly = true;
+}
+
+void Editor::setWait(int wait) {
+	oWait = wait;
 }
 
 void Editor::saveRecord() {
@@ -225,7 +240,7 @@ void Editor::mainLoop() {
 	while (loop) {
 		buf->setFocus();
 		if (!inKeys.empty()) {
-//			this_thread::sleep_for(chrono::milliseconds(20)); //TODO: Just for cosmetic reasons right now ;)
+			if (oWait > 0) this_thread::sleep_for(chrono::milliseconds(oWait));
 			key = inKeys.front();
 			inKeys.erase(inKeys.begin());
 			LOG4CXX_DEBUG(logger, "read key " << key << " from file - dispatching...");

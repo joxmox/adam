@@ -43,6 +43,7 @@ objTst = $(obj)tst/
 doc    = $(bld)docs/
 docApi = $(doc)api/
 docTst = $(doc)test/
+tstDat = $(bld)data/
 
 # names
 libName  = adam
@@ -89,7 +90,7 @@ all  : clean tar test doc
 # -----------------------
 
 dirs : 
-	$(md) $(objApp) $(objLib) $(objTst) $(bin) $(lib) $(docApi) $(docTst)
+	$(md) $(objApp) $(objLib) $(objTst) $(bin) $(lib) $(docApi) $(docTst) $(tstDat)
 
 
 # -----------------------
@@ -160,6 +161,7 @@ $(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp
 test_compile : lib $(bin)unitTest
 
 test_run : 
+	$(md) $(tstDat)
 	gnome-terminal --disable-factory -e "bash -c \"$(bin)unitTest --gtest_output=xml:$(docTst)gtest-results.xml ; sleep 2\"" 2> /dev/null
 
 test_report :
@@ -178,6 +180,9 @@ $(objTst)stringUtilsTest.o : $(tst)stringUtilsTest.cpp  $(utl)stringUtils.hpp $(
 	$(compile) $(tst_incl)
 
 $(objTst)adamTest.o : $(tst)adamTest.cpp  
+	$(compile) $(tst_incl)
+	
+$(objTst)ArgumentTest.o : $(tst)ArgumentTest.cpp $(utl)Argument.hpp  
 	$(compile) $(tst_incl)
 	
 $(objTst)ParseTest.o : $(tst)ParseTest.cpp  

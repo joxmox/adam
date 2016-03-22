@@ -12,11 +12,13 @@
 #include "log4cxx/propertyconfigurator.h"
 
 #include "Editor.hpp"
+#include "Argument.hpp"
 
 using namespace std;
 using namespace log4cxx;
 
 const string usage = " <file name> [--replay <filename>] [--record <filename>]";
+const string opFail = "Failed to parse options: ";
 
 LoggerPtr logger{Logger::getLogger("adam")};
 
@@ -27,7 +29,7 @@ void printUsage(char* argv[]) {
 string getArg(int argc, char* argv[], int& k, const string& opt) {
 	LOG4CXX_DEBUG(logger, "getting value for option " << opt);
 	if (++k >= argc) {
-		string error = "Failed to parse arguments: Missing argument for " + string(argv[k - 1]);
+		string error = opFail + "Missing argument for " + string(argv[k - 1]);
 		cerr << error << endl;
 		printUsage(argv);
 		throw invalid_argument(error);
@@ -39,46 +41,25 @@ int main(int argc, char* argv[]) {
     PropertyConfigurator::configure("conf/log4cxx.conf");
 	LOG4CXX_DEBUG(logger, "adam starting");
 
-	vector<string> params;
-	string input;
-	string record;
-	bool readOnly = false;
-	try {
-	for (int k = 1; k < argc; ++k) {
-		string arg = argv[k];
-		if (arg[0] == '-') {
-			if (arg == "--replay" || arg == "-p") {
-				input = getArg(argc, argv, k, "-p");
-			} else if (arg == "--record" || arg == "-r") {
-				record = getArg(argc, argv, k, "-r");
-			} else if (arg == "--readonly" || arg == "-o") {
-				LOG4CXX_DEBUG(logger, "option readonly set: ");
-				readOnly = true;
-			} else {
-				cerr << argv[0] << "Invalid option -- " << arg << endl << usage << endl;
-				return 1;
-			}
-		} else {
-			params.push_back(arg);
-		}
+	Argument arg {argc, argv};
+	arg.setParams(1);
+	arg.strOpt('p', "replay");
+	arg.strOpt('r', "record");
+	arg.boolOpt('o', "read-only");
+	arg.intOpt('w', "wait");
 
-	}
-	} catch (invalid_argument& e) {
+	if (!arg.validate()) {
+		cerr << arg.getError() << endl;
 		return 1;
 	}
 
-	string fileName;
-	if (params.size() > 0) fileName = params[0];
+    Editor ed {arg.getParam(0)};
+    if (arg.isSet("replay")) ed.setReplay(arg.getStr("replay"));
+    if (arg.isSet("record")) ed.setRecord(arg.getStr("record"));
+    if (arg.isSet("read-only")) ed.setReadOnly();
+    if (arg.isSet("wait")) ed.setWait(arg.getInt("wait"));
 
-    if (fileName.empty()) {
-    	cerr << argv[0] << "No filename specified" << endl << usage << endl;
-    	return 1;
-    }
-
-    LOG4CXX_DEBUG(logger, "command line ok. filename is " << fileName);
-
-    Editor ed {fileName, input, record, readOnly};
-    LOG4CXX_DEBUG(logger, "editor instance created - starting editing");
+    LOG4CXX_DEBUG(logger, "starting editor session");
     ed.edit();
     LOG4CXX_DEBUG(logger, "editor session ended");
 }

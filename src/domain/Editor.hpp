@@ -41,7 +41,8 @@ class Editor {
 	string fileName;
 	string oInput;
 	string oRecord;
-	bool oReadOnly;
+	bool oReadOnly = false;
+	int oWait = 0;
 	int key = 0;
 	bool loop = true;
 	bool learnFlag = false;
@@ -69,8 +70,12 @@ class Editor {
 	void abort(const string& str);
 
 public:
-	Editor(const string& fileName, const string& input, const string& record, bool readOnly);
+	Editor(const string& fileName);
 	~Editor();
+	void setReplay(const string &input);
+	void setRecord(const string &record);
+	void setReadOnly();
+	void setWait(int milli);
 	void edit();
 	int getKey();
 	Buffer* getBuffer();
