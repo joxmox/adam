@@ -89,5 +89,6 @@ public:
 	void debug();
 	void where();
 	void gotoExtreme(int x);
+	bool inView(int r = -1);
 };
 

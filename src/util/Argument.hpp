@@ -26,16 +26,18 @@ class Argument {
 	char** argv;
 	vector<string> params;
 	set<char> allOpts;
-	map<char, string> shortToLong;
 	map<string, char> longToShort;
 	map<char, int> hasValue; // 0=no value(bool), 1=string, 2=int
 	map<char, string> strValue;
 	map<char, int> intValue;
 	set<char> optSet;
-//	map<char, char> boolValue;
 	string errorText;
+	bool validated = false;
 private:
-	void init();
+	void construct();
+	void check();
+	void check(char opt);
+	void check(const string& opt);
 	char popFirst(string& str);
 	void anyOpt(char shortName, const string& longName);
 	vector<string> getData(const string& shortName, const string& longName);
@@ -55,21 +57,39 @@ public:
 	int getInt(const string& longName);
 	string getError();
 	string getParam(int i);
+	int numParams();
+	bool wantHelp();
 };
 
 Argument::Argument(int argc, char* argv[]): argc(argc), argv(argv) {
+	construct();
 }
 
 Argument::Argument(int argc, const char* argv[]): argc(argc), argv(const_cast<char**>(argv)) {
+	construct();
 }
 
-void Argument::init() {
+void Argument::construct() {
+	boolOpt('h', "help");
 
+}
+
+void Argument::check() {
+	if (!validated) throw logic_error("Arguments not validated!");
+}
+
+void Argument::check(char opt) {
+	if (allOpts.count(opt) == 0) throw logic_error("Undefined option referenced: -" + opt);
+	check();
+}
+
+void Argument::check(const string& opt) {
+	if (longToShort.count(opt) == 0) throw logic_error("Undefined option referenced: --" + opt);
+	check();
 }
 
 void Argument::anyOpt(char shortName, const string& longName) {
 	allOpts.insert(shortName);
-	shortToLong[shortName] = longName;
 	longToShort[longName] = shortName;
 }
 
@@ -94,6 +114,7 @@ void Argument::setParams(int minParams, int maxParams) {
 }
 
 bool Argument::validate() {
+	validated = true;
 	try {
 		for (int k = 1; k < argc; ++k) {
 			string arg = argv[k];
@@ -126,6 +147,9 @@ bool Argument::validate() {
 				}
 			}
 		}
+		if (optSet.count('h') > 0) return true;
+		if (params.size() > maxParams) throw logic_error(opFail + "too many parameters supplied");
+		if (params.size() < minParams) throw logic_error(opFail + "too few parameters supplied");
 	} catch (logic_error& e) {
 		errorText = e.what();
 		return false;
@@ -134,26 +158,32 @@ bool Argument::validate() {
 }
 
 bool Argument::isSet(char shortName) {
+	check(shortName);
 	return optSet.count(shortName) == 1;
 }
 
 bool Argument::isSet(const string& longName) {
+	check(longName);
 	return isSet(longToShort[longName]);
 }
 
 string Argument::getStr(char shortName) {
+	check(shortName);
 	return strValue[shortName];
 }
 
 string Argument::getStr(const string& longName) {
+	check(longName);
 	return getStr(longToShort[longName]);
 }
 
 int Argument::getInt(char shortName) {
+	check(shortName);
 	return intValue[shortName];
 }
 
 int Argument::getInt(const string& longName) {
+	check(longName);
 	return getInt(longToShort[longName]);
 }
 
@@ -164,15 +194,30 @@ char Argument::popFirst(string& str) {
 }
 
 string Argument::getError() {
+	check();
 	return errorText;
 }
 
 string Argument::getParam(int i) {
+	check();
+	if (i < 0) throw logic_error("There is no such thing as a negative parameter number");
+	if (i >= params.size()) {
+		if (params.size() == 0) {
+			throw logic_error("Cannot get parameter #" + to_string(i) + ", there are no parameters");
+		} else {
+			throw logic_error("Cannot get parameter #" + to_string(i) + ", maximum number is " + to_string(params.size()));
+		}
+	}
 	return params[i];
 }
 
+bool Argument::wantHelp() {
+	return isSet('h');
+}
 
-
+int Argument::numParams() {
+	return params.size();
+}
 
 
 #endif /* SRC_UTIL_ARGUMENT_HPP_ */

@@ -102,7 +102,7 @@ Buffer* Editor::getBuffer() {
 
 void Editor::exit() {
 	loop = false;
-	buf->saveToFile(fileName);
+	if (buf->isModified()) buf->saveToFile(fileName);
 }
 
 void Editor::quit() {

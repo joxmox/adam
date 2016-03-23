@@ -17,13 +17,25 @@
 using namespace std;
 using namespace log4cxx;
 
-const string usage = " <file name> [--replay <filename>] [--record <filename>]";
+const string usage = " <file> [-p <file>] [-r <file>] [-w <ms>] [-o]";
 const string opFail = "Failed to parse options: ";
 
 LoggerPtr logger{Logger::getLogger("adam")};
 
 void printUsage(char* argv[]) {
 	cerr << "usage: " << argv[0] << usage << endl;
+}
+
+void printHelp(char* argv[]) {
+	cerr << "usage: " << argv[0] << usage << endl;
+	cerr << R"(
+Short  Long option      Function
+-----  -----------      --------
+-p     --replay <file>  Reads simulated keystrokes from file
+-r     --record <file>  Writes all activity to file for later replay
+-w     --wait <ms>      When processing a replay file, sleep between keys
+-o     --read-only      Opens file write protected  
+)";
 }
 
 string getArg(int argc, char* argv[], int& k, const string& opt) {
@@ -50,7 +62,13 @@ int main(int argc, char* argv[]) {
 
 	if (!arg.validate()) {
 		cerr << arg.getError() << endl;
+		printUsage(argv);
 		return 1;
+	}
+
+	if (arg.wantHelp()) {
+		printHelp(argv);
+		return 0;
 	}
 
     Editor ed {arg.getParam(0)};
@@ -62,6 +80,8 @@ int main(int argc, char* argv[]) {
     LOG4CXX_DEBUG(logger, "starting editor session");
     ed.edit();
     LOG4CXX_DEBUG(logger, "editor session ended");
+
+    return 0;
 }
 
 

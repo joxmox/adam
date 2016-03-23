@@ -457,7 +457,24 @@ void Buffer::gotoRel(int toMove) {
 }
 
 void Buffer::gotoAbs(int line) {
-	if (line > data.size() - 1 || line < 0) throw logic_error("cannot goto line outside buffer");
+	line--;
+	int diff = line - row;
+	if (line > data.size() - 1) {
+		line = data.size() - 1;
+		scr->printMessage("Buffer has only " + to_string(data.size() -1) + " lines.  (Now going to End of Buffer).");
+	}
+	if (line < 0) {
+		line = 0;
+		scr->printMessage("Line number must be positive.  (Now going to Start of Buffer).");
+	}
+	if (inView(line)) {
+		scr->moveUp(diff); //FIXME: moveVertical()
+		scr->setCol(0);
+		row = line;
+		col = 0;
+	} else {
+		//FIXME: fixa kod!
+	}
 	gotoRel(line - row);
 }
 
@@ -502,4 +519,13 @@ void Buffer::gotoExtreme(int x) {
 	}
 	col= 0;
 	scr->setCol(0);
+}
+
+bool Buffer::inView(int r) {
+	if (r < 0) r = row;
+	int s = scr->getRow();
+	int t = row - s;
+	int b = t + scr->getHeight() - 1;
+	if (r >= t && r <= b) return true;
+	return false;
 }
