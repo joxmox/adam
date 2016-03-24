@@ -457,35 +457,41 @@ void Buffer::gotoRel(int toMove) {
 }
 
 void Buffer::gotoAbs(int line) {
-	line--;
 	int diff = line - row;
-	if (line > data.size() - 1) {
-		line = data.size() - 1;
-		scr->printMessage("Buffer has only " + to_string(data.size() -1) + " lines.  (Now going to End of Buffer).");
-	}
-	if (line < 0) {
-		line = 0;
-		scr->printMessage("Line number must be positive.  (Now going to Start of Buffer).");
-	}
+	if (diff == 0) return;
 	if (inView(line)) {
 		scr->moveUp(diff); //FIXME: moveVertical()
 		scr->setCol(0);
 		row = line;
 		col = 0;
 	} else {
+		int maxScrRow = scr->getHeight() - 1;
+		int maxBufRow = data.size() - 1;
+		if (diff > 0) {
+			if (maxBufRow - line <= maxScrRow) {
+				scr->repaint(data, line, maxScrRow - maxBufRow - line - 1); //FIXME: why not the last line?
+			}
+		}
 		//FIXME: fixa kod!
 	}
 	gotoRel(line - row);
 }
 
 void Buffer::gotoLine(const string& line) {
-	int iLine;
 	try {
-		iLine = stoi(line);
+		int iLine = stoi(line) - 1;
+		if (iLine > data.size() - 1) {
+			scr->printMessage("Buffer has only " + to_string(data.size() -1) + " lines.  (Now going to End of Buffer).");
+			iLine = data.size() - 1;
+		}
+		if (iLine < 0) {
+			scr->printMessage("Line number must be positive.  (Now going to Start of Buffer).");
+			iLine = 0;
+		}
+		gotoAbs(iLine);
 	} catch (invalid_argument& e) {
-		iLine = -1;
+		scr->printMessage("Line expects a number for argument number: 1");
 	}
-	if (iLine >= 0) gotoAbs(iLine);
 }
 
 void Buffer::gotoMark(const string& mark) {
