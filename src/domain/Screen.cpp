@@ -9,15 +9,15 @@
 #include <chrono>
 #include <thread>
 
-#include "log4cxx/logger.h"
+#include "logging.hpp"
 
 #include "Screen.hpp"
 #include "Curse.hpp"
 
 using namespace std;
-using namespace log4cxx;
 
-LoggerPtr Screen::logger{Logger::getLogger("Screen")};
+INIT_LOGGER(Screen, "Screen");
+//LoggerPtr Screen::logger{Logger::getLogger("Screen")};
 
 mutex Screen::gMessage;
 

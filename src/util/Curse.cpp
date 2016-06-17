@@ -1,6 +1,3 @@
-
-
-
 #include <string>
 #include <map>
 #include <cstdlib>
@@ -8,20 +5,24 @@
 #include <mutex>
 
 #include <ncurses.h>
-#include "log4cxx/logger.h"
 
+#include "logging.hpp"
 #include "Curse.hpp"
 
 
 using namespace std;
-using namespace log4cxx;
 
+#ifdef LOG4CXX
 LoggerPtr Curse::logger{Logger::getLogger("Curse")};
 LoggerPtr Win::logger{Logger::getLogger("Win")};
+#endif
+
 mutex Curse::gMaster;
 
 Curse::Curse() {
+#ifdef LOG4CXX
 	LOG4CXX_DEBUG(logger, "initializing ncurses");
+#endif
 	lock_guard<mutex> guard(gMaster);
 	initscr();
 	getmaxyx(stdscr, height, width);

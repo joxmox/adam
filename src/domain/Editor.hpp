@@ -14,16 +14,13 @@
 #include <fstream>
 #include <queue>
 
-#include "log4cxx/logger.h"
-
-
+#include "logging.hpp"
 #include "Buffer.hpp"
 #include "Curse.hpp"
 #include "Parse.hpp"
 
 
 using namespace std;
-using namespace log4cxx;
 
 class Editor;
 
@@ -55,7 +52,9 @@ class Editor {
 	funcVec disMap;
 	map<string, int> name2func;
 	map<int, string> func2name;
+#ifdef LOG4CXX
 	static log4cxx::LoggerPtr logger;
+#endif
 	string command;
 	static Parse<Editor>* parse;
 	string getBufferName(const string& fileName);

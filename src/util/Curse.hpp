@@ -4,8 +4,7 @@
 #include <string>
 #include <mutex>
 
-#include "log4cxx/logger.h"
-
+#include "logging.hpp"
 
 using namespace std;
 
@@ -24,7 +23,9 @@ class Curse {
 	int height;
 	int width;
 	vector<void*> winMap;
+#ifdef LOG4CXX
 	static log4cxx::LoggerPtr logger;
+#endif
 	static mutex gMaster;
 public:
 	Curse();
@@ -82,7 +83,9 @@ protected:
 	int col;
 	int id;
 	Curse* curse;
+#ifdef LOG4CXX
 	static log4cxx::LoggerPtr logger;
+#endif
 public:
 	Win(Curse* cur, int height, int width, int row, int col);
 	Win(int height, int width, int row, int col, int id, Curse* curse);

@@ -8,19 +8,28 @@
 #include <string>
 #include <iostream>
 
-#include "log4cxx/logger.h"
+#include "logging.hpp"
+#ifdef LOG4CXX
 #include "log4cxx/propertyconfigurator.h"
+#include "log4cxx/basicconfigurator.h"
+#include "log4cxx/fileappender.h"
+#include "log4cxx/simplelayout.h"
+#include "log4cxx/helpers/pool.h"
+#endif
+
 
 #include "Editor.hpp"
 #include "Argument.hpp"
 
 using namespace std;
+#ifdef LOG4CXX
 using namespace log4cxx;
+#endif
 
 const string usage = " <file> [-p <file>] [-r <file>] [-w <ms>] [-o]";
 const string opFail = "Failed to parse options: ";
 
-LoggerPtr logger{Logger::getLogger("adam")};
+GET_LOGGER("Adam");
 
 void printUsage(char* argv[]) {
 	cerr << "usage: " << argv[0] << usage << endl;
@@ -50,8 +59,6 @@ string getArg(int argc, char* argv[], int& k, const string& opt) {
 }
 
 int main(int argc, char* argv[]) {
-    PropertyConfigurator::configure("conf/log4cxx.conf");
-	LOG4CXX_DEBUG(logger, "adam starting");
 
 	Argument arg {argc, argv};
 	arg.setParams(1);
@@ -59,6 +66,7 @@ int main(int argc, char* argv[]) {
 	arg.strOpt('r', "record");
 	arg.boolOpt('o', "read-only");
 	arg.intOpt('w', "wait");
+	arg.strOpt('l', "logfile");
 
 	if (!arg.validate()) {
 		cerr << arg.getError() << endl;
@@ -70,6 +78,21 @@ int main(int argc, char* argv[]) {
 		printHelp(argv);
 		return 0;
 	}
+
+#if LOG4CXX
+	if (ifstream configTest {"conf/log4cxx"}) {
+		PropertyConfigurator::configure("conf/log4cxx.conf");
+	} else {
+		string logSpec {"/dev/null"};
+		if (arg.isSet("logfile")) logSpec = arg.getStr("logfile");
+		FileAppender* fileAppender = new FileAppender(LayoutPtr(new SimpleLayout()), logSpec, false);
+		helpers::Pool p;
+		fileAppender->activateOptions(p);
+		log4cxx::BasicConfigurator::configure(log4cxx::AppenderPtr(fileAppender));
+	}
+#endif
+
+	LOG4CXX_DEBUG(logger, "adam starting");
 
     Editor ed {arg.getParam(0)};
     if (arg.isSet("replay")) ed.setReplay(arg.getStr("replay"));

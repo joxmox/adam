@@ -11,8 +11,7 @@
 #include <fstream>
 #include <unordered_map>
 
-#include "log4cxx/logger.h"
-
+#include "logging.hpp"
 #include "Curse.hpp"
 #include "Screen.hpp"
 
@@ -38,7 +37,9 @@ private:
 	bool selectActive = false;
 	vector<string> pasteBuf;
 	bool firstKill = true;
+#ifdef LOG4CXX
 	static log4cxx::LoggerPtr logger;
+#endif
 //	Win* mainWin = nullptr;
 //	Win* stsWin = nullptr;
 //	Win* messWin = nullptr;

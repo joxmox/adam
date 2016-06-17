@@ -10,15 +10,17 @@
 #include <chrono>
 #include <random>
 
-#include "log4cxx/logger.h"
+#include "logging.hpp"
+#ifdef LOG4CXX
 #include "log4cxx/propertyconfigurator.h"
+#endif
 
 #include "Curse.hpp"
 
 using namespace std;
-using namespace log4cxx;
 
-LoggerPtr logger{Logger::getLogger("curtest")};
+GET_LOGGER("curtest");
+//LoggerPtr logger{Logger::getLogger("curtest")};
 
 void f(Win* w) {
 	random_device r;
@@ -39,7 +41,9 @@ void f(Win* w) {
 }
 
 int main() {
+#ifdef LOG4CXX
     PropertyConfigurator::configure("conf/log4cxx.conf");
+#endif
 	Curse c;
 	Win* w1 = c.creWin(10,20,0,0);
 	Win* w2 = c.creWin(10,20,12,20);

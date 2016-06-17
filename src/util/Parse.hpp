@@ -14,11 +14,10 @@
 #include <regex>
 #include "stringUtils.hpp"
 
-#include "log4cxx/logger.h"
+#include "logging.hpp"
 
 
 using namespace std;
-using namespace log4cxx;
 
 template<typename Object>
 class Parse {
@@ -28,7 +27,7 @@ public:
 private:
 	Object* obj;
 	cbErr errFunc = nullptr;
-	LoggerPtr logger{Logger::getLogger("Parse")};
+	GET_LOGGER("Parse");
 	vector<pair<regex, cbFun>> funcArr;
 	map<string, int>parseMap;
 public:

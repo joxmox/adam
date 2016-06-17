@@ -13,8 +13,7 @@
 #include <mutex>
 
 
-#include "log4cxx/logger.h"
-
+#include "logging.hpp"
 #include "Curse.hpp"
 
 class Screen : public Win {
@@ -23,7 +22,7 @@ class Screen : public Win {
 	Win* messWin;
 	Win* stsWin = nullptr;
 	vector<pair<int, int>> posStack;
-	static log4cxx::LoggerPtr logger;
+	CLASS_LOGGER();
 	static mutex gMessage;
 	Win* getMessWin();
 	Win* getCmdWin();

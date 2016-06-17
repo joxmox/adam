@@ -5,6 +5,7 @@
  *      Author: joxmox
  */
 
+#include <logging.hpp>
 #include <string>
 #include <map>
 #include <stdexcept>
@@ -12,8 +13,7 @@
 #include <chrono>
 #include <thread>
 
-#include "log4cxx/logger.h"
-
+#include "logging.hpp"
 #include "Buffer.hpp"
 #include "Curse.hpp"
 #include "Editor.hpp"
@@ -22,21 +22,23 @@
 #include "cbFuncs.hpp"
 
 using namespace std;
-using namespace log4cxx;
 
+#ifdef LOG4CXX
 LoggerPtr Editor::logger{Logger::getLogger("Editor")};
+#endif
 Parse<Editor>* Editor::parse;
 
 
+
 Editor::Editor(const string& fileName): fileName(fileName) {
-	LoggerPtr logger{Logger::getLogger("Editor")};
+	GET_LOGGER("Editor");
 	LOG4CXX_DEBUG(logger, "instance created. filename is " << fileName);
 }
 
 Editor::~Editor() {
-	LOG4CXX_DEBUG(logger, "shutting down");
+//	LOG4CXX_DEBUG(logger, "shutting down");
 	if (recFlag) {
-		LOG4CXX_DEBUG(logger, "saving record buffer");
+//		LOG4CXX_DEBUG(logger, "saving record buffer");
 		saveRecord();
 	}
 	if (buf) delete buf;

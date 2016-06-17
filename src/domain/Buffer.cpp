@@ -5,19 +5,20 @@
  *      Author: sebis
  */
 
+#include <logging.hpp>
 #include <string>
 #include <stdexcept>
 #include <fstream>
 
-#include "log4cxx/logger.h"
-
+#include "logging.hpp"
 #include "Buffer.hpp"
 #include "Screen.hpp"
 
 using namespace std;
-using namespace log4cxx;
 
+#ifdef LOG4CXX
 LoggerPtr Buffer::logger{Logger::getLogger("Buffer")};
+#endif
 
 Buffer::Buffer(const string& bufName, const string& fileName, Screen* scr, bool readOnly):
 		bufName(bufName), fileName(fileName), scr(scr), readOnly(readOnly) {

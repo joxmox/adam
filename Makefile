@@ -140,6 +140,8 @@ app_compile : lib $(bin)adam $(bin)ct
 # -----------------------
 $(bin)adam : $(objApp)adam.o $(lib)$(libFile)  
 	$(link)
+	echo $(HOME)/bin
+	if [ -d $(HOME)/bin ]; then cp $(bin)adam $(HOME)/bin; fi
 	
 $(bin)ct : $(objApp)ct.o $(lib)$(libFile)  
 	$(link)

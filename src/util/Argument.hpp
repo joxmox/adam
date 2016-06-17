@@ -12,13 +12,13 @@
 #include <vector>
 #include <set>
 
-#include "log4cxx/logger.h"
+#include "logging.hpp"
 
 using namespace std;
-using namespace log4cxx;
 
 class Argument {
-	LoggerPtr logger{Logger::getLogger("Argument")};
+	GET_LOGGER("Argument");
+//	LoggerPtr logger{Logger::getLogger("Argument")};
 	const string opFail = "Failed to parse options: ";
 	int minParams = 0;
 	int maxParams = 0;
