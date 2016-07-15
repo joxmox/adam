@@ -4,7 +4,7 @@ gtest		= $(HOME)/Tools/googletest-release-1.7.0
 
 # flags
 std			= -std=c++14
-cxx_opts	= $(std) -g3 -fmax-errors=1 -Wall -Wno-sign-compare
+cxx_opts	= $(std) -g3 -fmax-errors=1 -Wall -Wno-sign-compare -DLOG4CXX
 app_incl	= -I$(dom) -I$(utl)
 app_libs	= -L$(lib) -l$(libName) -llog4cxx -lpthread -lncurses
 tst_incl	= -I$(gtest)/include
@@ -138,7 +138,7 @@ app_compile : lib $(bin)adam $(bin)ct
 # -----------------------
 # app exes
 # -----------------------
-$(bin)adam : $(objApp)adam.o $(lib)$(libFile)  
+$(bin)adam : $(objApp)adam.o $(lib)$(libFile) 
 	$(link)
 	echo $(HOME)/bin
 	if [ -d $(HOME)/bin ]; then cp $(bin)adam $(HOME)/bin; fi
@@ -150,7 +150,7 @@ $(bin)ct : $(objApp)ct.o $(lib)$(libFile)
 # -----------------------
 # app objs
 # -----------------------
-$(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp
+$(objApp)adam.o : $(app)adam.cpp $(dom)Editor.hpp $(utl)Argument.hpp
 	$(compile)
 
 $(objApp)ct.o : $(app)ct.cpp $(utl)Curse.hpp

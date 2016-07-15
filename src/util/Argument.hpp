@@ -56,7 +56,7 @@ public:
 	int getInt(char shortName);
 	int getInt(const string& longName);
 	string getError();
-	string getParam(int i);
+	string getParam(int i, bool q = false);
 	int numParams();
 	bool wantHelp();
 };
@@ -198,14 +198,22 @@ string Argument::getError() {
 	return errorText;
 }
 
-string Argument::getParam(int i) {
+string Argument::getParam(int i, bool q) {
 	check();
 	if (i < 0) throw logic_error("There is no such thing as a negative parameter number");
 	if (i >= params.size()) {
-		if (params.size() == 0) {
-			throw logic_error("Cannot get parameter #" + to_string(i) + ", there are no parameters");
+		cout << q << endl;
+		if (q) {
+			return "";
 		} else {
-			throw logic_error("Cannot get parameter #" + to_string(i) + ", maximum number is " + to_string(params.size()));
+			if (!q && params.size() == 0) {
+				throw logic_error("Cannot get parameter #" + to_string(i) + ", there are no parameters");
+			} else {
+				cout << "balle" << endl;
+				cout << "balle" << endl;
+				cout << "balle" << endl;
+				throw logic_error("Cannot get parameter #" + to_string(i) + ", maximum number is " + to_string(params.size()));
+			}
 		}
 	}
 	return params[i];

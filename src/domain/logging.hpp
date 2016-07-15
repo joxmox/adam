@@ -9,6 +9,7 @@
 #define SRC_DOMAIN_LOGGING_HPP_
 
 #ifdef LOG4CXX
+
 #include "log4cxx/logger.h"
 using namespace log4cxx;
 #define CLASS_LOGGER(...) static log4cxx::LoggerPtr logger
@@ -16,6 +17,7 @@ using namespace log4cxx;
 #define INIT_LOGGER(cl, lg) LoggerPtr cl::logger{Logger::getLogger(lg)}
 
 #else
+
 #define LOG4CXX_FATAL(...)
 #define LOG4CXX_ERROR(...)
 #define LOG4CXX_WARN(...)
@@ -24,8 +26,7 @@ using namespace log4cxx;
 #define CLASS_LOGGER(...)
 #define GET_LOGGER(lg)
 #define INIT_LOGGER(cl, lg)
+
 #endif
-
-
 
 #endif /* SRC_DOMAIN_LOGGING_HPP_ */

@@ -8,6 +8,14 @@
 
 using namespace std;
 
+struct escVec {
+	bool final = false;
+	int value = 0;
+	map<int, escVec*> ptr;
+};
+
+
+
 class Win;
 enum curseAttrs {attRev = 1, attBold = 2}; //TODO: this should go into class I guess...
 
@@ -23,6 +31,7 @@ class Curse {
 	int height;
 	int width;
 	vector<void*> winMap;
+	escVec* escMap {new escVec};
 #ifdef LOG4CXX
 	static log4cxx::LoggerPtr logger;
 #endif
@@ -73,6 +82,8 @@ public:
 	void insertLine(int id);
 	void delChar(int id);
 	void delLine(int id);
+	void initEsc();
+	void addEsc(const string s, int a);
 };
 
 class Win {

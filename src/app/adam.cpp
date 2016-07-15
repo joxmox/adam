@@ -26,7 +26,7 @@ using namespace std;
 using namespace log4cxx;
 #endif
 
-const string usage = " <file> [-p <file>] [-r <file>] [-w <ms>] [-o]";
+const string usage = " [file] [-p <file>] [-r <file>] [-w <ms>] [-o]";
 const string opFail = "Failed to parse options: ";
 
 GET_LOGGER("Adam");
@@ -61,7 +61,7 @@ string getArg(int argc, char* argv[], int& k, const string& opt) {
 int main(int argc, char* argv[]) {
 
 	Argument arg {argc, argv};
-	arg.setParams(1);
+	arg.setParams(0, 1);
 	arg.strOpt('p', "replay");
 	arg.strOpt('r', "record");
 	arg.boolOpt('o', "read-only");
@@ -79,10 +79,13 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-#if LOG4CXX
-	if (ifstream configTest {"conf/log4cxx"}) {
+#ifdef LOG4CXX
+	cout << "log - yes" << endl;
+	if (ifstream configTest {"conf/log4cxx.conf"}) {
+		cout << "conf - yes" << endl;
 		PropertyConfigurator::configure("conf/log4cxx.conf");
 	} else {
+		cout << "conf - no" << endl;
 		string logSpec {"/dev/null"};
 		if (arg.isSet("logfile")) logSpec = arg.getStr("logfile");
 		FileAppender* fileAppender = new FileAppender(LayoutPtr(new SimpleLayout()), logSpec, false);
@@ -94,7 +97,7 @@ int main(int argc, char* argv[]) {
 
 	LOG4CXX_DEBUG(logger, "adam starting");
 
-    Editor ed {arg.getParam(0)};
+    Editor ed {arg.getParam(0, true)};
     if (arg.isSet("replay")) ed.setReplay(arg.getStr("replay"));
     if (arg.isSet("record")) ed.setRecord(arg.getStr("record"));
     if (arg.isSet("read-only")) ed.setReadOnly();

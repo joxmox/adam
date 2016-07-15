@@ -33,6 +33,7 @@ Curse::Curse() {
 	keypad(stdscr, true);
 	noecho();
 	winMap.push_back(stdscr);
+	initEsc();
 }
 
 Curse::~Curse() {
@@ -45,6 +46,31 @@ Curse::~Curse() {
 	}
 	lock_guard<mutex> guard(gMaster);
 	endwin();
+}
+
+void Curse::addEsc(const string s, int a) {
+	escVec* e = escMap;
+	for (auto c : s) {
+		if (e->ptr.find(c) == e->ptr.end()) {
+			escVec* f = new escVec;
+			e->ptr[c] = f;
+			e = f;
+		} else {
+			e = e->ptr[c];
+		}
+	}
+	e->final = true;
+	e->value =  a;
+}
+
+void Curse::initEsc() {
+	addEsc("[12~", 1);
+	addEsc("[13~", 2);
+	addEsc("[14~", 3);
+	addEsc("[15~", 4);
+	addEsc("Ok", 4);
+	addEsc("Ol", 5);
+	addEsc("Om", 276); //kp4 / kp-minus => do
 }
 
 
@@ -101,8 +127,23 @@ int Curse::getHeight() {
 }
 
 int Curse::readKey(int id) {
+
 	LOG4CXX_DEBUG(logger, "reading key from window id=" << id);
-    return wgetch(static_cast<WINDOW*>(winMap[id]));
+	int k = wgetch(static_cast<WINDOW*>(winMap[id]));
+	if (k != 27) return k;
+	LOG4CXX_DEBUG(logger, "escape key detected");
+	escVec* e {escMap};
+	while (!e->final) {
+		k = wgetch(static_cast<WINDOW*>(winMap[id]));;
+		if (e->ptr.find(k) != e->ptr.end()) {
+			LOG4CXX_DEBUG(logger, "valid sequence: " << k);
+			e = e->ptr[k];
+		} else {
+			LOG4CXX_DEBUG(logger, "invalid sequence: " << k << " - returning -1");
+			return -1;
+		}
+	}
+	return e->value;
 }
 
 string Curse::readString(int id) {

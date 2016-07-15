@@ -139,7 +139,10 @@ void Editor::edit() {
 
 	bufName = getBufferName(fileName);
 	buf = new Buffer(bufName, fileName, scr, oReadOnly);
+	curBuf = buf;
 	bufMap[bufName] = buf;
+	cmdBuf = new Buffer("*CMD*", "", cmdWin);
+	bufMap["*CMD*"] = cmdBuf;
 
 	int sts = buf->readFile();
 	if (sts >= 0) {
@@ -254,9 +257,13 @@ void Editor::mainLoop() {
 			key = buf->getScr()->readKey();
 			LOG4CXX_DEBUG(logger, "read key " << key << " from keyboard - dispatching...");
 		}
-		if (learnFlag) learnBuf.back().push_back(key);
-		if (recFlag) recBuf.push_back(key);
-		disMap[key](this, {});
+		if (key == -1) {
+			buf->getScr()->printWarning("Invalid escape sequence");
+		} else {
+			if (learnFlag) learnBuf.back().push_back(key);
+			if (recFlag) recBuf.push_back(key);
+			disMap[key](this, {});
+		}
 	}
 }
 

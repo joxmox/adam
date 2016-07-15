@@ -33,6 +33,8 @@ class Editor {
 	Win* cmdWin = nullptr;
 	Win* messWin = nullptr;
 	Buffer* buf = nullptr;
+	Buffer* cmdBuf = nullptr;
+	Buffer* curBuf = nullptr;
 	string bufName;
 	map<string, Buffer*> bufMap;
 	string fileName;
